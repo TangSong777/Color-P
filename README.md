@@ -132,8 +132,13 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 
 ```powershell
 # librime 的导入库已随仓库提供（src/build-libs），还需 Boost 1.82 与 Visual Studio 2022
-pwsh -NoProfile -File .\src\build-weasel.ps1 -Both
+pwsh -NoProfile -File .\src\build-weasel.ps1          # 只构建 x64（当前可用）
 ```
+
+**当前只保证 x64 可编译。** 32 位构建还需要 `src\lib\WinSparkle.lib`：上游 Weasel 把它随源码提供，
+本仓库没有包含（也没有 32 位 `WinSparkle.dll` 可供重新生成），因此 `-Both` 会在 Win32 阶段报
+`无法解析的外部符号 __imp__win_sparkle_*`。x64 所需的 `src\lib64\WinSparkle.lib` 已由安装目录的
+x64 `WinSparkle.dll` 重新生成并放在本机（未入库，因为它是本机产物）。
 
 产物在 `src\dist\x64\` 与 `src\dist\x86\`。部署时需要同时替换：
 
