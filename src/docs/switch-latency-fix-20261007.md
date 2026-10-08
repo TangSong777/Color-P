@@ -66,13 +66,19 @@ GDI+ 会话、已解码的 12 张 Color-P PNG（`SsfImageStore`）、DirectWrite
 
 ## 部署状态
 
-- `D:\Rime\weasel-0.17.4\weaselx64.dll` 已更新为 `437817621B18BCC7…`
-- `D:\Rime\weasel-0.17.4\weasel.dll` 已更新为 `AC9DE2F70C35A1A5…`
-- 旧文件备份在 `D:\Rime\weasel-0.17.4-backup-20261007-132910\`
-- **未完成**：`C:\Windows\System32\weasel.dll` 与 `C:\Windows\SysWOW64\weasel.dll`
-  仍是旧版，需要管理员权限；且这两个文件被 explorer.exe / SearchHost 映射，
-  必须重启后替换（或先注销）。当前会话无管理员权限，未擅自提权。
-- 未替换前，**运行中的宿主仍在使用旧 DLL**，修复不会生效。
+本节记录修复当天（2026-10-07）的部署过程，**当时的版本号已过时**；当前实际部署见仓库根
+`README.md` 与 `C:\Users\27974\Documents\Codex\2026-09-11\new-chat-2\outputs\Color-P-UI\deployment-status.json`。
+
+当时的过程与结论：
+
+- 安装目录 `D:\Rime\weasel-0.17.4\` 的两个 DLL 先更新（提交时的哈希为
+  `437817621B18BCC7…` / `AC9DE2F70C35A1A5…`，后续又因其他改动重新构建过）。
+- **当时的判断失误**：该修复其实位于 WeaselServer（`RimeWithWeasel.cpp`），不在
+  `weasel.dll` 里，所以只换 DLL 不生效。`WeaselServer.exe` 运行时被占用，需要先停进程
+  再用 `MoveFileEx(MOVEFILE_REPLACE_EXISTING)` 抢在自动拉起之前替换。
+- `C:\Windows\System32\weasel.dll` 与 `C:\Windows\SysWOW64\weasel.dll` 被 explorer.exe /
+  SearchHost 映射，必须重启才能替换。这一批备份目录（`weasel-0.17.4-backup-*`）后来在清理
+  多余文件时已全部删除。
 
 ## 回归注意
 

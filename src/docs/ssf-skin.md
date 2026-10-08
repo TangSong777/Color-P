@@ -16,9 +16,10 @@ specification.
 The layer is **opt-in and additive**. With no skin configured, Weasel renders
 exactly as before.
 
-1. Extract the `.ssf` skin into a directory under the Rime user directory
-   (`HKCU\Software\Rime\Weasel\RimeUserDir`, e.g. `D:\RimeUser`). The directory
-   must contain `skin.ini` and the skin's images:
+1. Extract the `.ssf` skin into a directory. Either a subdirectory of the Rime
+   user directory (`HKCU\Software\Rime\Weasel\RimeUserDir`, e.g. `D:\RimeUser`)
+   or an absolute path outside it; the directory must contain `skin.ini` and the
+   skin's images:
 
    ```
    D:\RimeUser\Color-P\
@@ -26,6 +27,12 @@ exactly as before.
        skin1_2.png   skin2.png   skin2_1.png   skin2_2.png
        cn2.png   cn3.png   en2.png ... (status-bar art)
    ```
+
+   **This repository deploys Color-P outside the user directory**, at
+   `C:\ProgramData\ColorPWeasel\Color-P`, because `ProgramData` is readable by
+   AppContainer hosts such as Windows Search. `rime-config/weasel.custom.yaml`
+   therefore sets `style/ssf_skin` to that absolute path. The `D:\RimeUser\...`
+   paths in the examples below are the generic case; substitute the deployed one.
 
 2. Add to `weasel.custom.yaml`:
 

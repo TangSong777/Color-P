@@ -21,7 +21,7 @@
   已有什么），当分隔符紧跟数字且 `ascii_punct` 关闭时返回 2 交给 punctuator。
 - 验证：`123.4`、`123,4`、`192.168.1.1` 正确；`ascii_punct` 打开时仍为 `123.4`；全角
   仍为 `１２３．４`；`test\TestSsfSkin\test_keypad.py` 636 项通过。
-- **该文件三处副本必须一致**：`D:\RimeUser\lua\`、`weasel-src\rime\lua\`、发布包 `lua\`
+- **该文件三处副本必须一致**：`D:\RimeUser\lua\`、仓库内 `src\rime\lua\`、发布包 `lua\`
   （当前均为 `560003EA97E64146…`），否则下次部署会覆盖修复。
 
 ### 拿不到光标位置时候选窗完全不显示
