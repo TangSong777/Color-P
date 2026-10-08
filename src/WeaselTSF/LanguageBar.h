@@ -36,11 +36,6 @@ class CLangBarItemButton : public ITfLangBarItemButton, public ITfSource {
   void SetLangbarStatus(DWORD dwStatus, BOOL fSet);
 
  private:
-  // Loads (and caches) the SSF skin's CN/EN indicator image for this button, so
-  // it matches the artwork the mode tip shows.  Returns nullptr when no skin
-  // applies or the image cannot be read.
-  HICON SkinIcon(bool chinese);
-
   GUID _guid;
   com_ptr<WeaselTSF> _pTextService;
   com_ptr<ITfLangBarItemSink> _pLangBarItemSink;
@@ -50,8 +45,4 @@ class CLangBarItemButton : public ITfLangBarItemButton, public ITfSource {
   weasel::UIStyle& _style;
   std::wstring _current_schema_zhung_icon;
   std::wstring _current_schema_ascii_icon;
-  // Skin indicator icons, keyed by the skin directory they came from.
-  HICON _skin_zhung_icon = nullptr;
-  HICON _skin_ascii_icon = nullptr;
-  std::wstring _skin_icon_source;
 };

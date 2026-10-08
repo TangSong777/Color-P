@@ -43,8 +43,9 @@ $ErrorActionPreference = 'Stop'
 
 $Root      = $PSScriptRoot
 $MsBuild   = 'D:\VisualStudio2022\MSBuild\Current\Bin\MSBuild.exe'
-$LibsX64   = 'D:\桌面\Harness工作区\皮肤\build-libs\rime_x64.lib'
-$LibsX86   = 'D:\桌面\Harness工作区\皮肤\build-libs\rime_x86.lib'
+# librime 的导入库随仓库提供，放在源码树的 build-libs 下，脚本因此可搬运。
+$LibsX64   = Join-Path $Root 'build-libs\rime_x64.lib'
+$LibsX86   = Join-Path $Root 'build-libs\rime_x86.lib'
 $DistDir   = Join-Path $Root 'dist'
 
 if (-not (Test-Path $MsBuild)) { throw "MSBuild not found: $MsBuild" }

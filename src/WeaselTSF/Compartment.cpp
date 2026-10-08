@@ -7,7 +7,6 @@
 #include "ResponseParser.h"
 #include "CandidateList.h"
 #include "LanguageBar.h"
-#include <WeaselModeDebug.h>
 
 STDMETHODIMP CCompartmentEventSink::QueryInterface(REFIID riid,
                                                    _Outptr_ void** ppvObj) {
@@ -213,11 +212,6 @@ void WeaselTSF::_UninitCompartment() {
 }
 
 HRESULT WeaselTSF::_HandleCompartment(REFGUID guidCompartment) {
-  {
-    wchar_t g[64] = {};
-    ::StringFromGUID2(guidCompartment, g, 64);
-    ModeDbg(std::wstring(L"[MODEDBG-TSF] _HandleCompartment ") + g);
-  }
   if (_cand && _cand->style().ssf_enabled &&
       IsEqualGUID(guidCompartment, GUID_COMPARTMENT_KEYBOARD_OPENCLOSE)) {
     // A host restoring its remembered open/close compartment is not Shift.

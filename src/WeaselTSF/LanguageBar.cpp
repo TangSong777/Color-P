@@ -4,157 +4,11 @@
 #include <shellapi.h>
 #include "WeaselTSF.h"
 #include "LanguageBar.h"
-#include <WeaselModeDebug.h>
 #include "ResponseParser.h"
 #include "CandidateList.h"
 #include <WeaselUtility.h>
-#include <gdiplus.h>
-#include <filesystem>
-#pragma comment(lib, "gdiplus.lib")
 
 static const DWORD LANGBARITEMSINK_COOKIE = 0x42424242;
-
-namespace {
-
-// The CN/EN indicator pair inside the SSF skin, in the order skin.ini declares
-// it for the status button.  Color-P has
-//   cn_en       = cn3.png,en3.png,a3.png
-//   cn_en_hover = cn2.png,en2.png,a2.png
-// and the mode tip shows the *_hover pair, so the button uses those: index 0 is
-// Chinese (cn2.png) and index 2 is English (a2.png), matching SsfLayout's
-// `chinese_mode ? 0 : 2`.
-constexpr int kChineseIconIndex = 0;
-constexpr int kEnglishIconIndex = 2;
-
-std::wstring IniValue(const std::filesystem::path& ini,
-                      const std::wstring& key) {
-  HANDLE h = ::CreateFileW(ini.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
-                           OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-  if (h == INVALID_HANDLE_VALUE) return std::wstring();
-  LARGE_INTEGER size = {};
-  if (!::GetFileSizeEx(h, &size) || size.QuadPart <= 0 ||
-      size.QuadPart > (1 << 20)) {
-    ::CloseHandle(h);
-    return std::wstring();
-  }
-  std::string bytes(static_cast<size_t>(size.QuadPart), '\0');
-  DWORD read = 0;
-  const BOOL ok =
-      ::ReadFile(h, bytes.data(), static_cast<DWORD>(bytes.size()), &read, nullptr);
-  ::CloseHandle(h);
-  if (!ok || read == 0) return std::wstring();
-  bytes.resize(read);
-
-  std::wstring text;
-  if (bytes.size() >= 2 && static_cast<unsigned char>(bytes[0]) == 0xFF &&
-      static_cast<unsigned char>(bytes[1]) == 0xFE)
-    text.assign(reinterpret_cast<const wchar_t*>(bytes.data() + 2),
-                (bytes.size() - 2) / sizeof(wchar_t));
-  else
-    text.assign(bytes.begin(), bytes.end());
-
-  const std::wstring needle = key + L"=";
-  size_t pos = text.find(needle);
-  if (pos == std::wstring::npos) return std::wstring();
-  pos += needle.size();
-  size_t end = text.find_first_of(L"\r\n", pos);
-  if (end == std::wstring::npos) end = text.size();
-  std::wstring value = text.substr(pos, end - pos);
-  while (!value.empty() && (value.front() == L' ' || value.front() == L'\t'))
-    value.erase(value.begin());
-  while (!value.empty() && (value.back() == L' ' || value.back() == L'\t'))
-    value.pop_back();
-  return value;
-}
-
-std::vector<std::wstring> SplitList(const std::wstring& value) {
-  std::vector<std::wstring> parts;
-  std::wstring current;
-  for (wchar_t c : value) {
-    if (c == L',') {
-      if (!current.empty()) parts.push_back(current);
-      current.clear();
-    } else {
-      current.push_back(c);
-    }
-  }
-  if (!current.empty()) parts.push_back(current);
-  return parts;
-}
-
-HICON LoadPngAsIcon(const std::filesystem::path& png, int size) {
-  if (png.empty() || !std::filesystem::exists(png)) return nullptr;
-  Gdiplus::Bitmap bitmap(png.c_str(), FALSE);
-  if (bitmap.GetLastStatus() != Gdiplus::Ok) return nullptr;
-
-  BITMAPV5HEADER header = {};
-  header.bV5Size = sizeof(BITMAPV5HEADER);
-  header.bV5Width = size;
-  header.bV5Height = -size;  // top-down
-  header.bV5Planes = 1;
-  header.bV5BitCount = 32;
-  header.bV5Compression = BI_BITFIELDS;
-  header.bV5RedMask = 0x00FF0000;
-  header.bV5GreenMask = 0x0000FF00;
-  header.bV5BlueMask = 0x000000FF;
-  header.bV5AlphaMask = 0xFF000000;
-
-  void* bits = nullptr;
-  HDC screen = ::GetDC(nullptr);
-  HBITMAP colour = ::CreateDIBSection(
-      screen, reinterpret_cast<BITMAPINFO*>(&header), DIB_RGB_COLORS, &bits,
-      nullptr, 0);
-  ::ReleaseDC(nullptr, screen);
-  if (!colour || !bits) {
-    if (colour) ::DeleteObject(colour);
-    return nullptr;
-  }
-  {
-    Gdiplus::Bitmap target(colour, nullptr);
-    Gdiplus::Graphics* graphics = Gdiplus::Graphics::FromImage(&target);
-    if (!graphics) {
-      ::DeleteObject(colour);
-      return nullptr;
-    }
-    graphics->SetCompositingMode(Gdiplus::CompositingModeSourceCopy);
-    graphics->SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
-    graphics->DrawImage(&bitmap, 0, 0, size, size);
-    delete graphics;
-  }
-  HBITMAP mask = ::CreateBitmap(size, size, 1, 1, nullptr);
-  ICONINFO info = {};
-  info.fIcon = TRUE;
-  info.hbmColor = colour;
-  info.hbmMask = mask;
-  HICON icon = ::CreateIconIndirect(&info);
-  ::DeleteObject(colour);
-  ::DeleteObject(mask);
-  return icon;
-}
-
-// Resolves the skin directory and loads the requested CN/EN indicator image.
-HICON LoadSkinStatusPng(const std::wstring& skin, int index) {
-  namespace fs = std::filesystem;
-  fs::path dir(skin);
-  if (!dir.is_absolute()) {
-    wchar_t base[MAX_PATH] = {};
-    if (::ExpandEnvironmentStringsW(L"%AppData%\\Rime", base, MAX_PATH) == 0)
-      return nullptr;
-    dir = fs::path(base) / skin;
-  }
-  const fs::path ini = dir / L"skin.ini";
-  if (!fs::exists(ini)) return nullptr;
-
-  std::vector<std::wstring> names = SplitList(IniValue(ini, L"cn_en_hover"));
-  if (names.empty()) names = SplitList(IniValue(ini, L"cn_en"));
-  if (names.empty()) return nullptr;
-  const std::wstring file =
-      index < static_cast<int>(names.size()) ? names[index] : names.back();
-  const int size = ::GetSystemMetrics(SM_CXSMICON);
-  return LoadPngAsIcon(dir / file, size > 0 ? size : 16);
-}
-
-}  // namespace
 
 static void HMENU2ITfMenu(HMENU hMenu, ITfMenu* pTfMenu) {
   /* NOTE: Only limited functions are supported */
@@ -345,34 +199,7 @@ STDMETHODIMP CLangBarItemButton::OnMenuSelect(UINT wID) {
   return S_OK;
 }
 
-HICON CLangBarItemButton::SkinIcon(bool chinese) {
-  if (!_style.ssf_enabled || _style.ssf_skin.empty()) return nullptr;
-  const std::wstring source = _style.ssf_skin;
-  if (_skin_icon_source != source) {
-    if (_skin_zhung_icon) { ::DestroyIcon(_skin_zhung_icon); _skin_zhung_icon = nullptr; }
-    if (_skin_ascii_icon) { ::DestroyIcon(_skin_ascii_icon); _skin_ascii_icon = nullptr; }
-    _skin_icon_source = source;
-    _skin_zhung_icon = LoadSkinStatusPng(source, kChineseIconIndex);
-    _skin_ascii_icon = LoadSkinStatusPng(source, kEnglishIconIndex);
-    ModeDbg(std::wstring(L"[TRAYDBG] langbar skin icons zhung=") +
-            (_skin_zhung_icon ? L"ok" : L"null") + L" ascii=" +
-            (_skin_ascii_icon ? L"ok" : L"null") + L" skin='" + source + L"'");
-  }
-  return chinese ? _skin_zhung_icon : _skin_ascii_icon;
-}
-
 STDMETHODIMP CLangBarItemButton::GetIcon(HICON* phIcon) {
-  // Prefer the SSF skin's own CN/EN indicator artwork, so this button shows the
-  // same images as the on-screen mode tip (Color-P: cn2.png for Chinese and
-  // a2.png for English, the pair skin.ini declares as cn_en_hover).  Falls back
-  // to the schema icons and then the built-in IDI_ZH / IDI_EN.
-  {
-    HICON skin_icon = SkinIcon(ascii_mode);
-    if (skin_icon) {
-      *phIcon = ::CopyIcon(skin_icon);
-      if (*phIcon) return S_OK;
-    }
-  }
   if (ascii_mode) {
     if (_style.current_ascii_icon.empty())
       *phIcon = (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_EN), IMAGE_ICON,
@@ -520,11 +347,7 @@ void WeaselTSF::_HandleLangBarMenuSelect(UINT wID) {
         weasel::ResponseParser parser(NULL, NULL, &_status, NULL,
                                       &_cand->style());
         if (m_client.GetResponseData(std::ref(parser))) {
-          ModeDbg(L"[MODEDBG] tray reply: ascii_mode=" +
-                  std::to_wstring(_status.ascii_mode ? 1 : 0));
           _UpdateLanguageBar(_status);
-        } else {
-          ModeDbg(L"[MODEDBG] tray reply: none");
         }
       }
       break;
@@ -595,9 +418,6 @@ void WeaselTSF::_UninitLanguageBar() {
 void WeaselTSF::_UpdateLanguageBar(weasel::Status stat) {
   if (!_pLangBarButton)
     return;
-  DebugStream() << L"[MODEDBG] UpdateLanguageBar: server ascii_mode="
-                << (stat.ascii_mode ? 1 : 0) << L" full_shape="
-                << (stat.full_shape ? 1 : 0) << L"\n";
   DWORD flags;
   _GetCompartmentDWORD(flags, GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION);
   if (stat.ascii_mode)

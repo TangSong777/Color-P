@@ -28,7 +28,6 @@ typedef enum { COLOR_ABGR = 0, COLOR_ARGB, COLOR_RGBA } ColorFormat;
 
 using namespace weasel;
 
-#include <WeaselModeDebug.h>
 
 static RimeApi* rime_api;
 WeaselSessionId _GenerateNewWeaselSessionId(const SessionStatusMap& sm, DWORD pid) {
@@ -387,11 +386,6 @@ BOOL RimeWithWeaselHandler::ProcessKeyEvent(KeyEvent keyEvent,
     const bool shift = keyEvent.keycode == ibus::Shift_L ||
                        keyEvent.keycode == ibus::Shift_R;
     if (m_base_style.ssf_enabled && !shift && ascii_after_key != ascii_before_key) {
-      ModeDbg(L"[MODEDBG] ProcessKeyEvent: REVERTING ascii_mode " +
-              std::to_wstring(ascii_after_key ? 1 : 0) + L" -> " +
-              std::to_wstring(ascii_before_key ? 1 : 0) + L" (keycode=" +
-              std::to_wstring(keyEvent.keycode) + L", shared=" +
-              std::to_wstring(m_shared_ascii_mode ? 1 : 0) + L")");
       rime_api->set_option(session_id, "ascii_mode", ascii_before_key);
       ascii_after_key = ascii_before_key;
     }
@@ -490,9 +484,6 @@ void RimeWithWeaselHandler::FocusIn(DWORD client_caps, WeaselSessionId ipc_id) {
   if (m_disabled)
     return;
   if (client_caps & 0x80000000u) {
-    ModeDbg(L"[MODEDBG] FocusIn: PROFILE activation, shared_before=" +
-            std::to_wstring(m_shared_ascii_mode ? 1 : 0) + L" sessions=" +
-            std::to_wstring(m_session_status_map.size()));
     // Profile activation: the user just selected Weasel, so always start in
     // Chinese.  Previously this only ran when m_profile_active had been cleared,
     // so a stale English state could survive the switch back and the first
@@ -705,7 +696,6 @@ void RimeWithWeaselHandler::SetOption(WeaselSessionId ipc_id,
   // that did nothing: the button flipped its own icon, the request was dropped,
   // and the next refresh snapped the icon back.  Accepting it makes the button
   // real and lets the icon follow the confirmed state.
-  ModeDbg(L"[MODEDBG] SetOption: opt=" + u8tow(opt) + L" val=" + std::to_wstring(val ? 1 : 0) + L" ipc_id=" + std::to_wstring(ipc_id) + L" shared_before=" + std::to_wstring(m_shared_ascii_mode ? 1 : 0) + L" global=" + std::to_wstring(m_global_ascii_mode ? 1 : 0));
   const auto mark_mode_tip_request = [&](WeaselSessionId id) {
     if (opt == "ascii_mode" && id)
       get_session_status(id).mode_tip_requested = true;
@@ -739,9 +729,6 @@ void RimeWithWeaselHandler::SetOption(WeaselSessionId ipc_id,
     // typing stayed in the old language.  Keep the shared value in step
     // whichever entry point performed the change.
     if (opt == "ascii_mode" && m_global_ascii_mode) {
-      ModeDbg(L"[MODEDBG] SetOption: session-scoped ascii_mode, syncing shared " +
-              std::to_wstring(m_shared_ascii_mode ? 1 : 0) + L" -> " +
-              std::to_wstring(val ? 1 : 0));
       m_shared_ascii_mode = val;
       // Apply to every session so the whole input method agrees, matching the
       // no-session branch above.

@@ -5,7 +5,6 @@
 #include <shellapi.h>
 #include <tlhelp32.h>
 #include "WeaselTSF.h"
-#include <WeaselModeDebug.h>
 #include "CandidateList.h"
 #include "LanguageBar.h"
 #include "Compartment.h"
@@ -175,7 +174,6 @@ ExitError:
 }
 
 STDMETHODIMP WeaselTSF::OnSetThreadFocus() {
-  ModeDbg(L"[MODEDBG-TSF] OnSetThreadFocus");
   std::wstring _ToggleImeOnOpenClose{};
   RegGetStringValue(HKEY_CURRENT_USER, L"Software\\Rime\\weasel",
                     L"ToggleImeOnOpenClose", _ToggleImeOnOpenClose);
@@ -191,7 +189,6 @@ STDMETHODIMP WeaselTSF::OnSetThreadFocus() {
   return S_OK;
 }
 STDMETHODIMP WeaselTSF::OnKillThreadFocus() {
-  ModeDbg(L"[MODEDBG-TSF] OnKillThreadFocus");
   _AbortComposition();
   m_client.FocusOut();
   return S_OK;
@@ -222,8 +219,6 @@ STDMETHODIMP WeaselTSF::OnActivated(REFCLSID clsid,
   }
 
   if (isActivated) {
-    DebugStream() << L"[MODEDBG] OnActivated(TRUE): resetting to Chinese on the "
-                     L"server side\n";
     // Language-profile activation is the normal path when the user switches
     // to Weasel.  Have the service ready before the next physical key event.
     if (_EnsureServerConnected(100)) {
@@ -231,17 +226,10 @@ STDMETHODIMP WeaselTSF::OnActivated(REFCLSID clsid,
       m_client.ProcessKeyEvent(0);
       weasel::ResponseParser parser(NULL, NULL, &_status, NULL, &_cand->style());
       m_client.GetResponseData(std::ref(parser));
-      DebugStream() << L"[MODEDBG] OnActivated(TRUE): server reported "
-                       L"ascii_mode="
-                    << (_status.ascii_mode ? 1 : 0) << L"\n";
-    } else {
-      DebugStream() << L"[MODEDBG] OnActivated(TRUE): server not connected, "
-                       L"reset skipped\n";
     }
     _ShowLanguageBar(TRUE);
     _UpdateLanguageBar(_status);
   } else {
-    DebugStream() << L"[MODEDBG] OnActivated(FALSE): leaving Weasel\n";
     m_client.FocusOut(0x80000000u);
     _DeleteCandidateList();
     _ShowLanguageBar(FALSE);
