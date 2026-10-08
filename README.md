@@ -86,7 +86,7 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 │   ├── build-libs/          #   librime 导入库（编译前提，随仓库提供）
 │   ├── build-support/       #   构建/测试辅助脚本
 │   ├── test/TestSsfSkin/    #   回归测试与探针
-│   └── docs/                #   设计与修复记录
+│   └── rime/lua/            #   ★ keypad_input.lua（小键盘混合输入，本项目新增）
 ├── assets/Color-P/          # 搜狗 Color-P 原始皮肤资源（skin.ini + 27 个图片）
 ├── rime-config/             # 运行时 Rime 配置
 │   ├── weasel.custom.yaml   #   启用 SSF 后端、配色、布局
@@ -97,10 +97,13 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 │   ├── librime-reference/   #   librime 源码，用于确认上游行为
 │   ├── ssfconv / 9ime/      #   SSF 转换与另一输入法的参考实现
 │   └── notes/               #   SSF 格式逆向笔记与预览图
-├── docs/                    # 本仓库文档
-│   ├── switch-latency-fix-20261007.md
-│   ├── intuition-audit-20261007.md
-│   └── comparison-with-weasel-and-sogou.md
+├── docs/                    # 全部文档（唯一一份，不再在 src/ 下重复）
+│   ├── ssf-skin.md                        # SSF 兼容层的设计与逆向记录
+│   ├── build-weasel.md                    # 构建说明
+│   ├── switch-latency-fix-20261007.md     # 切换输入法延迟修复
+│   ├── intuition-audit-20261007.md        # 行为审计（含已知取舍的依据）
+│   ├── comparison-with-weasel-and-sogou.md
+│   └── refactor-*.md / literal-commit-ui.md / host-compatibility-*.md
 ├── weasel-0.17.4/           # 已安装的小狼毫本体（第三方二进制，**不入库**）
 └── README.md
 ```
