@@ -71,8 +71,10 @@
 
 ## 目录结构
 
+本仓库直接位于小狼毫的**安装目录** `D:\Rime` 下，源码就在这一层的 `src/`，不再额外嵌套一层项目文件夹：
+
 ```
-Color-P/
+D:\Rime\                     # 仓库根 = 小狼毫安装目录
 ├── src/                     # 定制版 Weasel 源码（上游 0.17.4 + 本定制改动）
 │   ├── WeaselTSF/           #   TSF 输入服务：按键、焦点、候选列表、语言栏
 │   ├── WeaselUI/            #   候选窗渲染
@@ -81,6 +83,8 @@ Color-P/
 │   ├── RimeWithWeasel/      #   引擎与 UI 的粘合、模式与选项处理
 │   ├── rime/lua/            #   ★ keypad_input.lua（小键盘混合输入，本项目新增）
 │   ├── include/             #   公共头（含 WeaselTsfIdentity.h 等）
+│   ├── build-libs/          #   librime 导入库（编译前提，随仓库提供）
+│   ├── build-support/       #   构建/测试辅助脚本
 │   ├── test/TestSsfSkin/    #   回归测试与探针
 │   └── docs/                #   设计与修复记录
 ├── assets/Color-P/          # 搜狗 Color-P 原始皮肤资源（skin.ini + 27 个图片）
@@ -97,8 +101,11 @@ Color-P/
 │   ├── switch-latency-fix-20261007.md
 │   ├── intuition-audit-20261007.md
 │   └── comparison-with-weasel-and-sogou.md
+├── weasel-0.17.4/           # 已安装的小狼毫本体（第三方二进制，**不入库**）
 └── README.md
 ```
+
+`weasel-0.17.4/` 是运行时安装目录，被 `.gitignore` 排除在仓库之外；`src/build-libs/` 里的 librime 导入库体积很小（约 0.3 MB/架构），随仓库提供以便直接编译。
 
 `reference/` 下是**第三方项目的快照**，版权归各自作者，仅作查阅用途。真正属于本项目的改动集中在 `src/`（对照上游 Weasel）与 `rime-config/`。
 
@@ -109,12 +116,13 @@ Color-P/
 ### 前置
 
 - Windows 10/11
-- 已安装 [小狼毫 Weasel 0.17.4](https://github.com/rime/weasel/releases)
-- Visual Studio 2022（自行编译时需要）
+- 已安装 [小狼毫 Weasel 0.17.4](https://github.com/rime/weasel/releases)（本仓库假设它就在 `D:\Rime\weasel-0.17.4`）
+- Visual Studio 2022 + Boost 1.82（自行编译时需要）
 
 ### 快速使用（不编译）
 
 1. 把 `assets/Color-P/` 复制到一个固定目录，例如 `C:\ProgramData\ColorPWeasel\Color-P`
+   （放到 `ProgramData` 而非用户目录，是为了让 Windows Search 等 AppContainer 应用也能读到皮肤）
 2. 把 `rime-config/` 下的文件复制到小狼毫的用户目录（托盘菜单「用户文件夹」可打开）
 3. 把 `rime-config/lua/keypad_input.lua` 放到用户目录的 `lua\` 子目录
 4. 确认 `weasel.custom.yaml` 里的 `style/ssf_skin` 指向第 1 步的目录
@@ -123,14 +131,16 @@ Color-P/
 ### 从源码编译
 
 ```powershell
-# 需要 Visual Studio 2022、Boost 1.82，以及 librime 的导入库
+# librime 的导入库已随仓库提供（src/build-libs），还需 Boost 1.82 与 Visual Studio 2022
 pwsh -NoProfile -File .\src\build-weasel.ps1 -Both
 ```
 
-产物在 `dist\x64\` 与 `dist\x86\`。部署时需要同时替换：
+产物在 `src\dist\x64\` 与 `src\dist\x86\`。部署时需要同时替换：
 
-- 安装目录的 `WeaselServer.exe`、`weaselx64.dll`、`weasel.dll`
-- **`C:\Windows\System32\weasel.dll` 与 `C:\Windows\SysWOW64\weasel.dll`**（需要管理员权限；被宿主进程映射，必须重启才能替换）
+- 安装目录 `D:\Rime\weasel-0.17.4\` 下的 `WeaselServer.exe`、`weaselx64.dll`、`weasel.dll`
+- **`C:\Windows\System32\weasel.dll` 与 `C:\Windows\SysWOW64\weasel.dll`**（需要管理员权限；这两个文件被宿主进程映射，必须重启才能替换）
+
+`WeaselServer.exe` 运行时被占用，替换需要先停进程（或排重启替换）。
 
 ### 日常操作
 
@@ -152,11 +162,14 @@ pwsh -NoProfile -File .\src\build-weasel.ps1 -Both
 # SSF 皮肤解析与布局（237 项）
 pwsh -NoProfile -File .\src\build-ssf-tests.ps1 -Run
 
-# 小键盘混合输入 Lua 处理器（636 项）
+# 小键盘混合输入 Lua 处理器（636 项，需要 Python + lupa）
 python .\src\test\TestSsfSkin\test_keypad.py .\rime-config\lua\keypad_input.lua
 
-# 候选窗生命周期与输入法切换回归
+# 候选窗生命周期与输入法切换回归（11 项断言）
 pwsh -NoProfile -File .\src\build-panel-bench.ps1 -Run
+
+# 宿主兼容与 TSF 身份判定
+cmd /c .\src\build-support\test-host.cmd && .\src\dist\host-regression.exe
 ```
 
 项目在开发过程中修复的三个主要问题（切换延迟、候选窗闪烁、数字分隔符）都留有对应回归，写在 `docs/` 里。

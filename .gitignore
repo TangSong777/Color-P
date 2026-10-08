@@ -1,3 +1,9 @@
+# 本仓库直接位于小狼毫的安装目录 D:\Rime 下。
+# weasel-0.17.4 是已安装的小狼毫本体（第三方二进制），不属于本仓库内容。
+weasel-0.17.4/
+weasel-0.17.4-backup-*/
+RimeUser/
+
 # 构建产物
 out/
 output/
@@ -33,6 +39,13 @@ desktop.ini
 *.user
 *.suo
 
-# 本仓库里 reference/ 是第三方快照，保留其内容但忽略其自身的版本控制残留
+# reference/ 是第三方源码快照，忽略其自带的版本控制残留
 reference/**/.git/
 reference/**/.github/
+
+# librime 的导入库是编译前提，体积小（约 0.3 MB/架构），保留在仓库中。
+# 否定规则必须写在上面 *.lib / *.def / *.exp 之后才会生效。
+!src/build-libs/*.lib
+!src/build-libs/*.def
+!src/build-libs/*.exp
+
