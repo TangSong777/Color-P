@@ -43,9 +43,16 @@ desktop.ini
 reference/**/.git/
 reference/**/.github/
 
-# librime 的导入库是编译前提，体积小（约 0.3 MB/架构），保留在仓库中。
+# 编译前提的小体积导入库保留在仓库中（各约 0.3 MB / 10 KB）。
 # 否定规则必须写在上面 *.lib / *.def / *.exp 之后才会生效。
+#   build-libs/ = librime 导入库
+#   lib/  lib64/ = WinSparkle 导入库（由 WinSparkle.dll 的导出表生成）
 !src/build-libs/*.lib
 !src/build-libs/*.def
 !src/build-libs/*.exp
+!src/lib/WinSparkle.lib
+!src/lib64/WinSparkle.lib
+!src/lib/WinSparkle.def
+!src/lib64/WinSparkle.def
+
 

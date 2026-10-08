@@ -131,14 +131,21 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 ### 从源码编译
 
 ```powershell
-# librime 的导入库已随仓库提供（src/build-libs），还需 Boost 1.82 与 Visual Studio 2022
-pwsh -NoProfile -File .\src\build-weasel.ps1          # 只构建 x64（当前可用）
+# 需要 Boost 1.82 与 Visual Studio 2022；librime 与 WinSparkle 的导入库已随仓库提供
+pwsh -NoProfile -File .\src\build-weasel.ps1 -Both     # x64 + Win32
+pwsh -NoProfile -File .\src\build-weasel.ps1          # 只构建 x64
 ```
 
-**当前只保证 x64 可编译。** 32 位构建还需要 `src\lib\WinSparkle.lib`：上游 Weasel 把它随源码提供，
-本仓库没有包含（也没有 32 位 `WinSparkle.dll` 可供重新生成），因此 `-Both` 会在 Win32 阶段报
-`无法解析的外部符号 __imp__win_sparkle_*`。x64 所需的 `src\lib64\WinSparkle.lib` 已由安装目录的
-x64 `WinSparkle.dll` 重新生成并放在本机（未入库，因为它是本机产物）。
+编译前提（都已在仓库里，约 0.6 MB）：
+
+| 位置 | 内容 | 来源 |
+|---|---|---|
+| `src\build-libs\` | librime 的 `rime_x64.lib` / `rime_x86.lib` | 取自随小狼毫分发的 `rime.dll` |
+| `src\lib\`、`src\lib64\` | `WinSparkle.lib`（x86 / x64 各一份） | 由对应架构的 `WinSparkle.dll` 导出表生成 |
+
+`winsparkle.h` 里有 `#pragma comment(lib, "WinSparkle.lib")`，两个架构的库同名，靠
+`lib\`（Win32）与 `lib64\`（x64）两个库目录区分。x64 那份取自安装目录的 64 位
+`WinSparkle.dll`；x86 那份取自官方安装包解包出的 32 位同名 DLL（官方 NSIS 安装包是 32 位载荷）。
 
 产物在 `src\dist\x64\` 与 `src\dist\x86\`。部署时需要同时替换：
 
