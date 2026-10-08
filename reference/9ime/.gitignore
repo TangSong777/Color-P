@@ -1,0 +1,11 @@
+# Rust (9IME v2)
+/target
+/crates/*/target
+
+*.log
+.idea
+.vscode
+rime*.7z
+
+/rime
+

@@ -1,0 +1,31 @@
+patch:
+  # Process physical keypad literals before spelling and candidate selection.
+  # The top keyboard row keeps its normal candidate-selection bindings.
+  engine/processors:
+    - ascii_composer
+    - recognizer
+    - key_binder
+    # Intercept physical keypad keys before spelling.  Top-row digits still
+    # reach selector and remain candidate-selection keys.
+    - lua_processor@*keypad_input
+    - speller
+    - punctuator
+    - selector
+    - navigator
+    - express_editor
+  # Among punctuation keys, only the unshifted main-row - and = page.
+  # No bracket word-selection processor: [ and ] belong to the punctuator.
+  key_binder/select_first_character: ""
+  key_binder/select_last_character: ""
+  key_binder/import_preset: null
+  key_binder/bindings:
+    - {accept: "Shift+Tab", send: "Shift+Left", when: composing}
+    - {accept: Tab, send: "Shift+Right", when: composing}
+    - {accept: "Alt+Left", send: "Shift+Left", when: composing}
+    - {accept: "Alt+Right", send: "Shift+Right", when: composing}
+    - {accept: minus, send: Page_Up, when: has_menu}
+    - {accept: equal, send: Page_Down, when: has_menu}
+    - {accept: "Control+Shift+3", toggle: ascii_punct, when: always}
+    - {accept: "Control+Shift+numbersign", toggle: ascii_punct, when: always}
+    - {accept: "Control+Shift+4", toggle: traditionalization, when: always}
+    - {accept: "Control+Shift+dollar", toggle: traditionalization, when: always}

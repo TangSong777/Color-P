@@ -1,0 +1,22 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/9ime-librime",
+  "crates/9ime-core",
+  "crates/9ime-console",
+  "crates/9ime-tsf",
+  "crates/9ime-ipc",
+  "crates/9ime-server",
+  "crates/9ime-deployer",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0"
+rust-version = "1.75"
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true

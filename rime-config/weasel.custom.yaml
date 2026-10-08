@@ -1,0 +1,73 @@
+# Color-P：修改后请在小狼毫托盘菜单中重新部署。
+#
+# NOTE: style/ssf_* below switch the candidate window over to the Sogou SSF
+# compatibility renderer. Remove (or set style/ssf_enabled: false) to fall back
+# to the stock Weasel colour-scheme rendering with no other change needed.
+customization:
+  distribution_code_name: Weasel
+  distribution_version: 0.17.4
+  generator: Weasel::UIStyleSettings
+  modified_time: Fri Sep 11 10:53:20 2026
+  rime_version: 1.13.1
+patch:
+  global_ascii: true
+  show_notifications_time: 2000
+  # --- Sogou SSF skin backend -------------------------------------------
+  # Relative to the Rime user directory (D:\RimeUser), or an absolute path.
+  # The directory must contain skin.ini plus the skin's PNG files.
+  style/ssf_skin: 'C:\ProgramData\ColorPWeasel\Color-P'
+  style/ssf_enabled: true
+  # Draw the skin's status bar (cn/en, punctuation, full/half, trad/simp, menu).
+  style/ssf_status_bar: false
+  # --- stock colour scheme (used when the SSF backend is off) ------------
+  style/color_scheme: color_p
+  style/color_scheme_dark: color_p
+  style/font_face: Arial, 宋体
+  style/label_font_face: Arial, 宋体
+  style/comment_font_face: Arial, 宋体
+  style/font_point: 16
+  style/label_font_point: 16
+  style/comment_font_point: 16
+  style/horizontal: true
+  style/vertical_text: false
+  style/inline_preedit: false
+  style/preedit_type: composition
+  style/label_format: '%s.'
+  style/layout/border_width: 1
+  style/layout/margin_x: 7
+  style/layout/margin_y: 5
+  style/layout/spacing: 6
+  style/layout/candidate_spacing: 14
+  style/layout/hilite_spacing: 2
+  style/layout/hilite_padding: 2
+  style/layout/hilite_padding_x: 2
+  style/layout/hilite_padding_y: 2
+  style/layout/corner_radius: 0x00000000
+  style/layout/round_corner: 0x00000000
+  style/layout/shadow_radius: 0x00000000
+  style/layout/min_width: 0x00000000
+  style/layout/min_height: 0x00000000
+  preset_color_schemes/color_p:
+    name: 竹子 Color-P
+    author: 原作：墨竹；小狼毫配色移植
+    color_format: argb
+    back_color: 0xFFF8F8F6
+    border_color: 0xFFFF6C6E
+    text_color: 0xFF3C3C3C
+    candidate_text_color: 0xFFFF6C6E
+    label_color: 0xFFFF6C6E
+    comment_text_color: 0xFF2F2F2F
+    candidate_back_color: 0xFFF8F8F6
+    hilited_text_color: 0xFF3C3C3C
+    hilited_back_color: 0xFFFF6C6E
+    hilited_candidate_text_color: 0xFF3C3C3C
+    hilited_candidate_back_color: 0xFFF8F8F6
+    hilited_candidate_border_color: 0xFFF8F8F6
+    hilited_label_color: 0xFF3C3C3C
+    hilited_comment_text_color: 0xFF2F2F2F
+    hilited_mark_color: 0x00000000
+    shadow_color: 0x00000000
+    prevpage_color: 0xFFFFB5B6
+    nextpage_color: 0xFFFF6C6E
+
+

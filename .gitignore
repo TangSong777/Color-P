@@ -1,0 +1,38 @@
+# 构建产物
+out/
+output/
+dist/
+msbuild/
+build/
+*.obj
+*.pdb
+*.ilk
+*.iobj
+*.ipdb
+*.exp
+*.lib
+*.exe
+*.dll
+*.pch
+*.ipch
+*.tlog
+*.log
+
+# 编译中间目录
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+*.bak
+*~
+
+# 编辑器
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# 本仓库里 reference/ 是第三方快照，保留其内容但忽略其自身的版本控制残留
+reference/**/.git/
+reference/**/.github/

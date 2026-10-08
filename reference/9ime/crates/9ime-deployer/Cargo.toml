@@ -1,0 +1,11 @@
+[package]
+name = "nineime-deployer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+nineime-core = { path = "../9ime-core" }
+eframe = "0.31"
+png = "0.17"
+rfd = "0.15"
