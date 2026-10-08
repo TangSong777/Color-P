@@ -1,0 +1,9 @@
+# Color-P：修改后请在小狼毫托盘菜单中重新部署。
+# 配色与布局说明（这行中文用于验证 UTF-8 注释不被破坏）
+customization:
+  distribution_code_name: Weasel
+patch:
+  global_ascii: true
+  style/ssf_skin: 'old/relative/path'
+  style/ssf_enabled: true
+  style/font_face: Arial, 宋体

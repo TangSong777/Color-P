@@ -1,0 +1,4 @@
+# LF 行尾，无尾换行
+patch:
+  style/ssf_skin: 'x'
+  other: 1

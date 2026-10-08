@@ -1,0 +1,4 @@
+# 没有 ssf_skin 字段的配置
+patch:
+  global_ascii: true
+  style/font_face: Arial
