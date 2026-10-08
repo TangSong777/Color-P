@@ -1,0 +1,16 @@
+# 暂存安装器载荷
+#
+# 这里只声明规则，不提交任何二进制或第三方素材：
+#   · payload/ime/      本项目编译的三个文件，从 src/dist 取
+#   · payload/skin/     搜狗 Color-P 皮肤，从本机已部署的皮肤目录取
+#   · payload/updater/  WinSparkle，从已装的小狼毫目录取
+#   · payload/rime-data/ 雾凇拼音数据，从本机 Rime 用户目录取
+#
+# 上游安装器、小狼毫二进制、皮肤素材都**不**进仓库（版权与体积原因），
+# 由 build-installer.ps1 在打包时从本机或上游取。
+payload/ime/
+payload/skin/
+payload/updater/
+payload/rime-data/
+payload/upstream-installer.exe
+output/

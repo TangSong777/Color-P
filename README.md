@@ -116,13 +116,40 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 
 ## 安装与使用
 
-### 前置
+### 方式一：直接安装（推荐，不需要编译）
 
-- Windows 10/11
-- 已安装 [小狼毫 Weasel 0.17.4](https://github.com/rime/weasel/releases)（本仓库假设它就在 `D:\Rime\weasel-0.17.4`）
-- Visual Studio 2022 + Boost 1.82（自行编译时需要）
+从 [Releases](https://github.com/TangSong777/Color-P/releases) 下载
+`Color-P-Setup-0.17.4.exe`，**右键以管理员身份运行**，按向导下一步即可。
 
-### 快速使用（不编译）
+安装器会一次做完这些事：
+
+1. 静默运行内嵌的小狼毫官方安装器 —— 由它完成文本服务注册、卸载项与评测数据
+2. 用小狼毫 0.17.4 的官方安装器建立运行时，再覆盖上本项目编译的输入法本体
+3. 把皮肤装到 `C:\ProgramData\ColorPWeasel\Color-P`
+4. 把雾凇拼音（rime-ice）数据与配色、按键配置装进你的 Rime 用户目录
+5. 装好小键盘混合输入的 Lua 处理器
+6. 重新部署一次，让配置与皮肤立即生效
+
+装完**重启一次**，然后在语言列表里选「小狼毫 / Color-P」即可。
+
+安装后的布局：
+
+| 内容 | 位置 |
+|---|---|
+| 输入法本体 | `C:\Program Files\Rime\weasel-0.17.4` |
+| 皮肤 | `C:\ProgramData\ColorPWeasel\Color-P` |
+| Rime 配置与词库 | 你的 Rime 用户目录（默认 `%APPDATA%\Rime`） |
+
+> 皮肤之所以不放在 `Program Files`，是因为 Windows Search 等 AppContainer
+> 宿主读不到那里，会导致在文件资源管理器里没有候选窗外观。`ProgramData` 三方都能读。
+
+**已经装过小狼毫的话**：安装器会检测到并提示你先卸载旧版 ——
+否则系统里会注册出两个输入法，语言列表出现重复项。
+
+卸载走「设置 → 应用」，或安装目录下的卸载程序；它会先调小狼毫自带卸载器
+注销文本服务，再删文件。
+
+### 方式二：手动部署（已有小狼毫，只想换皮肤与配置）
 
 1. 把 `assets/Color-P/` 复制到一个固定目录，例如 `C:\ProgramData\ColorPWeasel\Color-P`
    （放到 `ProgramData` 而非用户目录，是为了让 Windows Search 等 AppContainer 应用也能读到皮肤）
@@ -130,6 +157,19 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 3. 把 `rime-config/lua/keypad_input.lua` 放到用户目录的 `lua\` 子目录
 4. 确认 `weasel.custom.yaml` 里的 `style/ssf_skin` 指向第 1 步的目录
 5. 托盘菜单 →「重新部署」
+
+### 自行制作安装器
+
+```powershell
+# 需要 Inno Setup 6：winget install JRSoftware.InnoSetup
+# 载荷（上游安装器、皮肤素材、词库）各自从本机取，不进仓库，所以要先有：
+#   · 本仓库源码已编译出 src\dist
+#   · 本机已部署过小狼毫与皮肤
+pwsh -File .\src\installer\build-installer.ps1
+```
+
+产物在 `src\installer\output\`。脚本会校验打包数据里**不含个人数据**
+（`userdb`、`sync/`、`installation.yaml`、`user.yaml` 一律排除）。
 
 ### 从源码编译
 
