@@ -36,7 +36,6 @@ $ErrorActionPreference = 'Stop'
 
 $Root        = $PSScriptRoot
 $SrcRoot     = Split-Path $Root -Parent          # ..\src
-$RepoRoot    = Split-Path $SrcRoot -Parent       # 仓库根
 $Payload     = Join-Path $Root 'payload'
 $UpstreamVer = '0.17.4'
 

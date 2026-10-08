@@ -60,9 +60,11 @@ Name: "rimeice"; Description: "安装雾凇拼音（rime-ice）方案数据，�
 Name: "updater"; Description: "安装自动更新组件（WinSparkle）"; GroupDescription: "可选组件："; Flags: unchecked
 
 [Files]
-; ---- 交给官方安装器的部分：只内嵌它，安装时由代码调用 ------------------
-Source: "payload\upstream-installer.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
-
+; IMPORTANT — 顺序有性能后果，别随意调整。
+; 本安装器开了 SolidCompression；Inno 文档明确要求：用 ExtractTemporaryFile 取的
+; 文件必须列在 [Files] 最前面，否则每次提取都要把前面所有文件先解到内存（本载荷
+; 四十多 MB，会明显卡顿）。所以四个 dontcopy 文件放在最顶，大件压后。
+;
 ; ---- 本项目编译的三个核心文件：不直接落盘，安装后期再覆盖 --------------
 Source: "payload\ime\WeaselServer.exe"; DestDir: "{tmp}"; Flags: dontcopy
 Source: "payload\ime\weaselx64.dll";    DestDir: "{tmp}"; Flags: dontcopy
@@ -70,6 +72,9 @@ Source: "payload\ime\weasel.dll";       DestDir: "{tmp}"; Flags: dontcopy
 
 ; ---- 需要改写皮肤路径的配置文件：先取到临时目录，改完再放 ------------
 Source: "..\..\rime-config\weasel.custom.yaml"; DestDir: "{tmp}"; Flags: dontcopy
+
+; ---- 交给官方安装器的部分：内嵌，安装时由代码调用 --------------------
+Source: "payload\upstream-installer.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
 ; ---- 自动更新组件（可选）--------------------------------------------
 Source: "payload\updater\WinSparkle.dll"; DestDir: "{app}"; Flags: ignoreversion; Tasks: updater
@@ -146,6 +151,11 @@ var
   existing, ourDir: string;
   answer: Integer;
 begin
+  // 必须先取用户目录：下面的 [Files] 用 {code:GetRimeUserDir}，
+  // 而该函数只是读出 RimeUserDir 变量，不初始化就会拿到空路径。
+  RimeUserDir := DetectRimeUserDir();
+  SkinRoot := ExpandConstant('{commonappdata}\{#SkinDirName}\Color-P');
+
   existing := WeaselInstalledRoot();
   ourDir := ExpandConstant('{autopf}\Rime\weasel-{#UpstreamVersion}');
   if (existing <> '') and (CompareText(existing, ourDir) <> 0) then
@@ -226,7 +236,7 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   rc: Integer;
-  base, app: string;
+  base, app, failed: string;
 begin
   if CurStep = ssInstall then
   begin
@@ -257,13 +267,26 @@ begin
       MsgBox('找不到内嵌的官方安装器，安装不完整。', mbCriticalError, MB_OK);
 
     // ---- 2. 覆盖成本项目编译的三个文件 ----
+    // 必须校验拷贝结果：若文件仍被占用，CopyFile 会静默失败，用户拿到的
+    // 就是一个没被替换过的原版小狼毫，而且不会有任何提示。
     KillWeaselProcesses();
     ExtractTemporaryFile('WeaselServer.exe');
     ExtractTemporaryFile('weaselx64.dll');
     ExtractTemporaryFile('weasel.dll');
-    CopyFile(ExpandConstant('{tmp}\WeaselServer.exe'), app + '\WeaselServer.exe', False);
-    CopyFile(ExpandConstant('{tmp}\weaselx64.dll'),    app + '\weaselx64.dll', False);
-    CopyFile(ExpandConstant('{tmp}\weasel.dll'),       app + '\weasel.dll', False);
+
+    failed := '';
+    if not CopyFile(ExpandConstant('{tmp}\WeaselServer.exe'), app + '\WeaselServer.exe', False) then
+      failed := failed + #13#10 + '    ' + app + '\WeaselServer.exe';
+    if not CopyFile(ExpandConstant('{tmp}\weaselx64.dll'), app + '\weaselx64.dll', False) then
+      failed := failed + #13#10 + '    ' + app + '\weaselx64.dll';
+    if not CopyFile(ExpandConstant('{tmp}\weasel.dll'), app + '\weasel.dll', False) then
+      failed := failed + #13#10 + '    ' + app + '\weasel.dll';
+
+    if failed <> '' then
+      MsgBox('以下文件没能替换成 Color-P 定制版：' + failed + #13#10 + #13#10 +
+             '通常是这些文件正被占用（宿主进程仍加载着它们）。' + #13#10 +
+             '安装出来的会是原版小狼毫，不是定制版。' + #13#10 + #13#10 +
+             '请重启后重新运行本安装器。', mbCriticalError, MB_OK);
 
     // ---- 3. 改写皮肤路径并落盘配置 ----
     if WizardIsTaskSelected('skin') then
@@ -278,13 +301,6 @@ procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   if CurUninstallStep = usUninstall then
     KillWeaselProcesses();
-end;
-
-function InitializeUninstall(): Boolean;
-begin
-  RimeUserDir := DetectRimeUserDir();
-  SkinRoot := ExpandConstant('{commonappdata}\{#SkinDirName}\Color-P');
-  Result := True;
 end;
 
 procedure InitializeWizard();
