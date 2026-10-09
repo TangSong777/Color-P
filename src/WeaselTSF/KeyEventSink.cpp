@@ -30,6 +30,22 @@ void WeaselTSF::_ProcessKeyEvent(WPARAM wParam, LPARAM lParam, BOOL* pfEaten) {
     _cand->Destroy();
   }
 
+  // Ctrl+BackSpace：清空整个候选框的输入，而不只是删掉一个拼音音节。
+  //
+  // 必须在把按键交给服务端之前拦截：rime_ice 把 Control+BackSpace 绑成
+  // back_syllable（只退回一个音节）。若让它先执行，Rime 那边的组合状态就被
+  // 改成了“只剩前面几个音节”，我们再清 UI 就与真实状态不一致了。
+  //
+  // 这里直接终止整个组合：_AbortComposition 会清 Rime 会话、结束 TSF 组合、
+  // 隐藏并销毁候选窗，并清掉 Lua 侧的虚拟尾巴。没有组合时不吃键，交还宿主
+  // （保持 Ctrl+BackSpace 在普通文本框里“删前一个词”的原义）。
+  if ((wParam == VK_BACK) && (GetKeyState(VK_CONTROL) & 0x8000) &&
+      !(lParam & (1LL << 31)) && (_IsComposing() || _status.composing)) {
+    _AbortComposition();
+    *pfEaten = TRUE;
+    return;
+  }
+
   // This is normally already ready from profile activation.  If a service was
   // restarted in the background, wait briefly here rather than leaking the
   // first pinyin letters into the application as ASCII.
