@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 
   std::string name = argv[2];
   std::vector<Step> steps;
-  bool ascii_mode = false, ascii_punct = false;
+  bool ascii_mode = false, ascii_punct = false, full_shape = false;
 
   // 全量主键盘标点:无候选框时应直接上屏配置形态
   static const struct { const char* name; int code; } kPunct[] = {
@@ -86,6 +86,12 @@ int main(int argc, char** argv) {
   else if (name == "ascii_en")  { steps = {{',', "comma"}}; ascii_mode = true; }
   else if (name == "asciipunct"){ steps = {{',', "comma"}}; ascii_punct = true; }
   else if (name == "fullshape") { steps = {{',', "comma"}, {'.', "period"}}; }
+  else if (name.rfind("fs_", 0) == 0) {
+    full_shape = true;
+    for (const auto& p : kPunct) {
+      if (name == std::string("fs_") + (p.name + 2)) { steps = {{p.code, name.c_str() + 3}}; break; }
+    }
+  }
   else if (name.rfind("p_", 0) == 0) {
     for (const auto& p : kPunct) {
       if (name == p.name) { steps = {{p.code, name.c_str() + 2}}; break; }
@@ -96,7 +102,7 @@ int main(int argc, char** argv) {
   g_api->clear_composition(g_session);
   g_api->set_option(g_session, "ascii_mode", ascii_mode);
   g_api->set_option(g_session, "ascii_punct", ascii_punct);
-  if (name == "fullshape") g_api->set_option(g_session, "full_shape", true);
+  if (full_shape || name == "fullshape") g_api->set_option(g_session, "full_shape", true);
   Commit();
 
   std::printf("[%s] ascii_mode=%d ascii_punct=%d\n", name.c_str(), ascii_mode?1:0, ascii_punct?1:0);
@@ -110,3 +116,4 @@ int main(int argc, char** argv) {
   g_api->finalize();
   return 0;
 }
+
