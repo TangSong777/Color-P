@@ -391,14 +391,21 @@ function keypad_input.func(key, env)
   if not key:release() then env.shift_armed = false end
   if key:release() then return 2 end
   if context.get_option and context:get_option("ascii_mode") then return 2 end
-  -- Only spelling starts a candidate composition. A punctuation key after a
-  -- standalone keypad commit must not enter punctuator's symbol menu.
+  -- 没有候选框（没输入过字母）时，小键盘字符和标点都直接上屏。
+  -- 有候选框时走下面的混合输入分支，塞进候选框。
   if not context:is_composing() then
-    if separator_owned_by_punctuator(env, punctuation_value(key_repr)) then
-      -- Digit separator: hand the key to the punctuator rather than committing
-      -- the configured Chinese punctuation. Returning 2 passes it down.
-      return 2
+    -- 数字后面的 , . : 表示小数点或千分位，必须保持 ASCII，否则 123.4 会变成
+    -- 123。4。方案里的 punctuator/digit_separators 本就规定了这个例外。
+    local plain = punctuation_value(key_repr)
+    if separator_owned_by_punctuator(env, plain) then
+      env.clear_virtual_state()
+      env.engine:commit_text(plain)
+      remember_commit(env, plain)
+      return 1
     end
+    -- 其余标点直接提交配置里的形态（半角/全角由方案与当前中英状态决定）。
+    -- 从前这里把标点交给 punctuator（return 2），但实测 punctuator 并不提交它：
+    -- 键被吃掉、字符留在 input 里，既没上屏也没候选框，逗号就这样“消失”了。
     local literal = keypad_literals[key_repr] or env.punctuation(key_repr) or key_repr:match("^[0-9]$")
     if literal then
       env.clear_virtual_state()
