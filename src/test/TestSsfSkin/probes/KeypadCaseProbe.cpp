@@ -74,6 +74,15 @@ int main(int argc, char** argv) {
   else if (name == "kpthen_comma") steps = {{0xffb4, "KP_4"}, {0xffb4, "KP_4"}, {',', "comma"}};
   else if (name == "letters")     steps = {{'n', "n"}, {'i', "i"}, {',', "comma"}};
   else if (name == "letters_digit_punct") steps = {{'n', "n"}, {0xffb4, "KP_4"}, {'.', "period"}};
+  // 新规则：中文模式下主键盘标点一律中文，数字后面也不例外。
+  // 需要 ASCII 小数点时用小键盘 KP_Decimal。
+  else if (name == "main_192")    steps = {{'1', "1"}, {'9', "9"}, {'2', "2"}, {'.', "period"}, {'1', "1"}};
+  else if (name == "main_123c")   steps = {{'1', "1"}, {'2', "2"}, {'3', "3"}, {',', "comma"}, {'4', "4"}};
+  else if (name == "main_colon")  steps = {{'1', "1"}, {'2', "2"}, {':', "colon"}, {'3', "3"}};
+  else if (name == "kpdec_alone") steps = {{0xffae, "KP_Decimal"}};
+  else if (name == "main_dec_ascii") steps = {{'1', "1"}, {'.', "period"}, {'4', "4"}};
+  else if (name == "mixed_digit_punct") steps = {{'n', "n"}, {0xffb4, "KP_4"}, {'.', "period"}};
+  else if (name == "mixed_digit_punct_commit") steps = {{'n', "n"}, {0xffb4, "KP_4"}, {'.', "period"}, {0xff0d, "Enter"}};
   else if (name == "ascii_en")  { steps = {{',', "comma"}}; ascii_mode = true; }
   else if (name == "asciipunct"){ steps = {{',', "comma"}}; ascii_punct = true; }
   else if (name == "fullshape") { steps = {{',', "comma"}, {'.', "period"}}; }

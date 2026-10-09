@@ -31,31 +31,11 @@ local function punctuation_value(repr)
   return punctuation_literals[repr:gsub("^Shift%+", "")]
 end
 
--- A digit separator typed directly after a digit must stay a separator.
--- Committing the configured Chinese punctuation here turned "123.4" into
--- "123。4" and "192.168.1.1" into "192。168。1。1", because this processor runs
--- before Rime's punctuator and therefore pre-empted its
--- "digit_separators: ,.:" rule.
+-- 标点形态完全由模式决定，不再有“数字后保持 ASCII”的例外。
 --
--- env.last_commit records the literal this processor committed most recently:
--- a Lua processor cannot read what is already in the document.
-local function is_digit_separator(value)
-  return value == "." or value == "," or value == ":"
-end
-local function follows_digit(env, value)
-  return is_digit_separator(value) and env.last_commit ~= nil and
-      env.last_commit:match("^[0-9]$") ~= nil
-end
--- True when the key must be left to the punctuator instead of being committed
--- here. With ascii_punct on the raw ASCII form is wanted anyway, so the
--- processor keeps owning the key; otherwise the punctuator's digit_separators
--- rule yields "123.4" in half shape and the shape formatter yields "１２３．４"
--- in full shape.
-local function separator_owned_by_punctuator(env, value)
-  return follows_digit(env, value) and
-      not (env.engine.context.get_option and
-           env.engine.context:get_option("ascii_punct"))
-end
+-- 之前实现的 digit_separators 例外（数字后的 , . : 保持 ASCII，以保住 123.4 与
+-- 192.168.1.1）按需求去掉了：中文模式下主键盘标点一律给中文标点，英文模式交给
+-- 宿主给英文标点。需要打小数点时用小键盘的 KP_Decimal，它仍然输出 ASCII 的 "."。
 local function remember_commit(env, text)
   env.last_commit = text
 end
@@ -108,7 +88,7 @@ function keypad_input.init(env)
   env.literal_only = false
   env.shift_armed = false
   env.transitioning = false
-  -- Most recent literal this processor committed; see follows_digit().
+  -- 最近一次提交的字面量。Lua 处理器读不到文档里已有的内容，只能自己记。
   env.last_commit = nil
   local context = env.engine.context
 
@@ -394,18 +374,10 @@ function keypad_input.func(key, env)
   -- 没有候选框（没输入过字母）时，小键盘字符和标点都直接上屏。
   -- 有候选框时走下面的混合输入分支，塞进候选框。
   if not context:is_composing() then
-    -- 数字后面的 , . : 表示小数点或千分位，必须保持 ASCII，否则 123.4 会变成
-    -- 123。4。方案里的 punctuator/digit_separators 本就规定了这个例外。
-    local plain = punctuation_value(key_repr)
-    if separator_owned_by_punctuator(env, plain) then
-      env.clear_virtual_state()
-      env.engine:commit_text(plain)
-      remember_commit(env, plain)
-      return 1
-    end
-    -- 其余标点直接提交配置里的形态（半角/全角由方案与当前中英状态决定）。
-    -- 从前这里把标点交给 punctuator（return 2），但实测 punctuator 并不提交它：
-    -- 键被吃掉、字符留在 input 里，既没上屏也没候选框，逗号就这样“消失”了。
+    -- 标点直接提交配置里的形态：中文模式给中文标点，英文模式在函数开头已经
+    -- 交还给宿主，所以这里不必再判断。从前把标点交给 punctuator（return 2），
+    -- 但实测 punctuator 并不提交它 —— 键被吃掉、字符留在 input 里，既没上屏
+    -- 也没候选框，逗号就这样“消失”了。
     local literal = keypad_literals[key_repr] or env.punctuation(key_repr) or key_repr:match("^[0-9]$")
     if literal then
       env.clear_virtual_state()
@@ -511,6 +483,24 @@ function keypad_input.func(key, env)
     local raw = input .. env.tail
     local position = env.tail_cursor > 0 and (#input + env.tail_cursor) or
         math.max(0, math.min(context.caret_pos or #input, #input))
+    -- 标点在这里不能“立刻上屏”。
+    --
+    -- 本分支的 input/tail/buffer 里还压着未上屏的字母和字面量（例如 n4），
+    -- 若此刻 commit，标点会排在它们前面，最终得到 "。n4" 而不是 "n4。"。
+    -- 所以只处理“形态”问题：把方案配置的中文标点放进虚拟尾巴。
+    --
+    -- 这同时解决了模式一致性：若交给后面的 punctuator，它会按方案的
+    -- digit_separators 规则把紧跟数字的 , . : 改写成 ASCII（"4，" 变回 "4,"），
+    -- 与“中文模式一律中文标点”相反。自己记下配置形态就绕开了那条规则。
+    -- 需要 ASCII 小数点时用小键盘的 KP_Decimal，它走 keypad_literals 路径。
+    local punct = punctuation_value(key_repr)
+    if punct then
+      local mapped = env.punctuation(key_repr)
+      if mapped then
+        env.edit_raw(insert_at(raw, position, mapped), position + #mapped)
+        return 1
+      end
+    end
     local value = keypad_value or
         (is_letter_or_apostrophe(key_repr) and letter_value(key_repr))
     if value then
@@ -550,15 +540,14 @@ function keypad_input.func(key, env)
     return 2
   end
 
-  -- Rime's stock pipeline does not translate keypad key symbols (KP_0 …
-  -- KP_9) to ordinary digits and operators when no pinyin composition exists. Returning 2
-  -- here therefore makes them disappear in many TSF hosts. Commit the literal
-  -- literal ourselves so the keypad is usable outside a candidate sequence.
+  -- Rime 原生流水线在没有拼音组合时不会把 KP_0…KP_9 这类小键盘键符号翻译成
+  -- 普通数字与运算符，return 2 会让它们在很多 TSF 宿主里直接消失。所以自己提交，
+  -- 让小键盘在候选序列之外也能用。
+  --
+  -- 这里天然就是“模式决定标点”：进入本函数时英文模式已提前交还宿主，走到这里
+  -- 一定是中文模式，keypad_value 里的 "/" "*" "-" "+" "." 本身就是 ASCII 运算符
+  -- 与小数点，正是中文模式下小键盘该有的样子（KP_Decimal 因此仍能打出 4.5）。
   if not context:is_composing() then
-    if separator_owned_by_punctuator(env, keypad_value) then
-      -- Keypad "." right after a digit is a decimal point, not a full stop.
-      return 2
-    end
     env.clear_virtual_state()
     env.engine:commit_text(keypad_value)
     remember_commit(env, keypad_value)
