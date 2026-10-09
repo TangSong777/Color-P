@@ -564,7 +564,14 @@ STDMETHODIMP WeaselTSF::OnCompositionTerminated(TfEditCookie ecWrite,
 void WeaselTSF::_AbortComposition(bool clear) {
   m_client.ClearComposition();
   if (_IsComposing()) {
-    _EndComposition(_pEditSessionContext, clear);
+    // _EndComposition 内部直接 pContext->RequestEditSession(...)，不判空。
+    // _pEditSessionContext 要到第一次 _UpdateComposition 才被赋值，此前为
+    // nullptr；在这种状态下终止组合会解引用空指针。没有上下文时只能丢弃本地
+    // 引用：宿主那边的组合范围没有被清掉，但至少不会崩，且 Rime 会话已清空。
+    if (_pEditSessionContext != nullptr)
+      _EndComposition(_pEditSessionContext, clear);
+    else
+      _FinalizeComposition();
   }
   _committed = TRUE;
   _cand->Destroy();

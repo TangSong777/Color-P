@@ -6,13 +6,28 @@
 #include "HostCompatibility.h"
 
 void WeaselTSF::_ProcessKeyEvent(WPARAM wParam, LPARAM lParam, BOOL* pfEaten) {
-  // when _IsKeyboardDisabled don't eat the key,
-  // when keyboard closable and keyboard closed, don't eat the key
+  // 键盘被关掉时不吞键，并且顺手清掉残留组合。
   if ((_isToOpenClose && !_IsKeyboardOpen()) || _IsKeyboardDisabled()) {
     _InvalidateCaret();
     if (_IsComposing() || _status.composing) _AbortComposition();
     *pfEaten = FALSE;
     return;
+  }
+
+  // 会话不变量：Rime 在 composing ⇒ TSF 必须持有组合。
+  //
+  // 光标移开时若宿主只是把组合窗口收走（或应用自己结束了组合），可能留下
+  // 「Rime 仍 composing、TSF 已无组合、候选窗也不在」的中间态。这个状态下先前的
+  // 字母还在 Rime 会话里：回到输入框时它们既不显示候选、又选不动，看起来就是
+  // “刚才打的字还留着但失效了”，接着打字还会沿用旧会话。
+  //
+  // 一旦发现这个不变量被破坏，就在处理本次按键之前把会话清干净，保证重新输入
+  // 从零开始、也不会弹出一个与当前输入无关的候选框。
+  if (!_IsComposing() && _status.composing) {
+    m_client.ClearComposition();
+    _status.composing = false;
+    _committed = TRUE;
+    _cand->Destroy();
   }
 
   // This is normally already ready from profile activation.  If a service was
