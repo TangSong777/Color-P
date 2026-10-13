@@ -256,7 +256,26 @@ pwsh -NoProfile -File .\src\build-panel-bench.ps1 -Run
 
 # 宿主兼容与 TSF 身份判定
 cmd /c .\src\build-support\test-host.cmd && .\src\dist\host-regression.exe
+
+# 「裸 Shift 切中英」状态机（15 项断言）
+cmd /c .\src\build-support\test-idle-shift.cmd && .\src\dist\idle-shift.exe
 ```
+
+### 性能测量工具
+
+以下三个工具用于回答具体的性能问题，输出的是实测微秒数，不是估算：
+
+```powershell
+# Lua 处理器每次按键的开销（需要 Python + lupa）
+python .\src\test\TestSsfSkin\bench_keypad.py .\rime-config\lua\keypad_input.lua
+
+# 显示路径查询与磁盘探测的开销（WeaselUserDataPath / is_regular_file）
+# 与一次完整响应帧的序列化+解析开销
+# 两者都是 probes/ 下的独立 .cpp，用 build-support\test-host.cmd 同样的命令编译即可
+```
+
+`src/test/TestSsfSkin/probes/` 下另有直接对真实 librime 的行为探针
+（`KeypadCaseProbe` 按场景逐个校验小键盘与标点形态），是排查标点问题的依据。
 
 安装器本身另有一套逻辑验证装置，不需要管理员权限即可跑：
 
