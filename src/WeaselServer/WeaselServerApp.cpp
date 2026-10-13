@@ -1,13 +1,15 @@
 #include "stdafx.h"
 #include "WeaselServerApp.h"
 #include <filesystem>
+#include <WeaselIdleShift.h>
 
 namespace {
 RimeWithWeaselHandler* idle_mode_handler = nullptr;
 HHOOK idle_keyboard_hook = nullptr;
 HHOOK idle_mouse_hook = nullptr;
-bool idle_shift_armed = false;
-DWORD idle_shift_key = 0;
+// 裸 Shift 切换中英文的状态机。判定本身在 WeaselIdleShift.h 里（可单测），
+// 这里只负责把事件喂进去并执行它给出的动作。
+weasel_idle_shift::State idle_shift;
 UINT_PTR idle_shift_timer = 0;
 
 // Drops a queued bare-Shift toggle.  Used both by the keyboard hook (anything
@@ -16,7 +18,8 @@ UINT_PTR idle_shift_timer = 0;
 // still land the queued ToggleIdleMode, so switching away with the mouse and
 // clicking somewhere else changed Weasel's CN/EN state afterwards.
 void CancelIdleShiftToggle() {
-  idle_shift_armed = false;
+  idle_shift.armed = false;
+  idle_shift.timer_pending = false;
   if (idle_shift_timer) {
     KillTimer(nullptr, idle_shift_timer);
     idle_shift_timer = 0;
@@ -26,6 +29,7 @@ void CancelIdleShiftToggle() {
 void CALLBACK ApplyIdleShift(HWND, UINT, UINT_PTR timer, DWORD) {
   KillTimer(nullptr, timer);
   idle_shift_timer = 0;
+  idle_shift.timer_pending = false;
   if (idle_mode_handler) idle_mode_handler->ToggleIdleMode();
 }
 LRESULT CALLBACK IdleKeyboard(int code, WPARAM message, LPARAM data) {
@@ -34,27 +38,34 @@ LRESULT CALLBACK IdleKeyboard(int code, WPARAM message, LPARAM data) {
     if (!(key.flags & LLKHF_INJECTED)) {
       const bool shift = key.vkCode == VK_LSHIFT || key.vkCode == VK_RSHIFT;
       const bool down = message == WM_KEYDOWN || message == WM_SYSKEYDOWN;
-      if (!shift) {
+      using weasel_idle_shift::Event;
+      const Event event = !shift      ? Event::kNonShiftKey
+                          : down      ? Event::kShiftDown
+                                      : Event::kShiftUp;
+
+      // 前提检查只在“准备待命”时求值一次：它要查输入法状态、开销不小。
+      bool arm_allowed = false;
+      if (event == Event::kShiftDown && !idle_shift.armed) {
+        // Only arm while Weasel is the text service the user is typing with.
+        // The hook is global, so without this a bare Shift changed Weasel's
+        // CN/EN state while another keyboard (for example the US layout) was
+        // selected.
+        arm_allowed = RimeWithWeaselHandler::WeaselHasForegroundKeyboard() &&
+                      idle_mode_handler->CanToggleIdleMode() &&
+                      !(GetAsyncKeyState(VK_CONTROL) & 0x8000) &&
+                      !(GetAsyncKeyState(VK_MENU) & 0x8000) &&
+                      !(GetAsyncKeyState(VK_LWIN) & 0x8000) &&
+                      !(GetAsyncKeyState(VK_RWIN) & 0x8000);
+      }
+
+      const auto decision =
+          weasel_idle_shift::Classify(idle_shift, event, arm_allowed, key.vkCode);
+      weasel_idle_shift::Apply(idle_shift, decision, arm_allowed, key.vkCode);
+
+      if (decision.cancel) {
         CancelIdleShiftToggle();
-      } else if (down) {
-        if (!idle_shift_armed) {
-          // Only arm while Weasel is the text service the user is typing with.
-          // The hook is global, so without this a bare Shift changed Weasel's
-          // CN/EN state while another keyboard (for example the US layout) was
-          // selected.
-          idle_shift_armed =
-              RimeWithWeaselHandler::WeaselHasForegroundKeyboard() &&
-              idle_mode_handler->CanToggleIdleMode() &&
-              !(GetAsyncKeyState(VK_CONTROL) & 0x8000) &&
-              !(GetAsyncKeyState(VK_MENU) & 0x8000) &&
-              !(GetAsyncKeyState(VK_LWIN) & 0x8000) &&
-              !(GetAsyncKeyState(VK_RWIN) & 0x8000);
-          idle_shift_key = key.vkCode;
-        }
-      } else {
-        if (idle_shift_armed && key.vkCode == idle_shift_key && !idle_shift_timer)
-          idle_shift_timer = SetTimer(nullptr, 0, 1, ApplyIdleShift);
-        idle_shift_armed = false;
+      } else if (decision.schedule) {
+        idle_shift_timer = SetTimer(nullptr, 0, 1, ApplyIdleShift);
       }
     }
   }
@@ -65,8 +76,13 @@ LRESULT CALLBACK IdleMouse(int code, WPARAM message, LPARAM data) {
   // gesture is over: drop both the armed flag and any queued toggle.  Keyboard
   // shortcuts still arrive as key events and are filtered there.
   if (code == HC_ACTION && message != WM_MOUSEMOVE &&
-      message != WM_NCMOUSEMOVE)
+      message != WM_NCMOUSEMOVE) {
+    using weasel_idle_shift::Event;
+    const auto decision =
+        weasel_idle_shift::Classify(idle_shift, Event::kPointerActivity, false);
+    weasel_idle_shift::Apply(idle_shift, decision, false);
     CancelIdleShiftToggle();
+  }
   return CallNextHookEx(idle_mouse_hook, code, message, data);
 }
 }  // namespace
