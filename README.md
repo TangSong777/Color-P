@@ -6,15 +6,36 @@
 
 ---
 
+## 目录
+
+- [它是什么](#它是什么)
+- [独特之处](#独特之处)
+  - [1. 搜狗皮肤在 Rime 里真正跑起来](#1-搜狗皮肤在-rime-里真正跑起来ssf-兼容层)
+  - [2. 小键盘的「原义输入 + 混合分段选词」](#2-小键盘的原义输入--混合分段选词)
+  - [3. 无独立状态栏的紧凑外观](#3-无独立状态栏的紧凑外观)
+  - [4. 为稳定性做的定制](#4-为稳定性做的定制)
+- [关于 Shift 切换中英文](#关于-shift-切换中英文)
+- [目录结构](#目录结构)
+- [安装与使用](#安装与使用)
+- [日常操作](#日常操作)
+- [测试](#测试)
+- [从源码恢复与构建](#从源码恢复与构建)
+- [已知取舍](#已知取舍)
+- [致谢与声明](#致谢与声明)
+
+---
+
 ## 它是什么
 
 | | 说明 |
 |---|---|
-| 引擎 | [librime](https://github.com/rime/librime) 1.13.1（未修改上游） |
-| 前端 | [Weasel 小狼毫](https://github.com/rime/weasel) 0.17.4（大量定制） |
+| 引擎 | [librime](https://github.com/rime/librime) 1.13.1，**官方发布版二进制**（含 librime-lua / octagram / predict 插件），未做任何改动 |
+| 前端 | [Weasel 小狼毫](https://github.com/rime/weasel) 0.17.4（本项目做了大量定制） |
 | 外观 | 搜狗「竹子 Color-P」皮肤，**直接复用原图资源**，在 Weasel 内自绘 |
 | 方案 | `rime_ice`（雾凇拼音） |
 | 开发方式 | vibe coding —— 我描述需求，AI 读代码、改代码、写测试并验证 |
+
+引擎是**上游编译好的 `rime.dll`**，本项目不改动它（原因见 [关于 Shift 切换中英文](#关于-shift-切换中英文)）。所有定制都在 Weasel 前端、配置与皮肤层。
 
 ---
 
@@ -31,7 +52,7 @@
 
 原图资源的 27 个文件全部保留在 `assets/Color-P/`。
 
-### 2. 物理小键盘的「原义输入 + 混合分段选词」
+### 2. 小键盘的「原义输入 + 混合分段选词」
 
 这是本定制最独特的设计，**搜狗和原版小狼毫都没有**。
 
@@ -69,38 +90,74 @@
 | **切换回小狼毫必定是中文** | 新建会话即强制中文，避免残留英文状态 |
 | **标点形态完全由中英模式决定** | 中文模式一律中文标点（`,`→`，`、`.`→`。`，数字后面也不例外），英文模式交给宿主。**打小数点用小键盘的 `KP_Decimal`**，它输出 ASCII `.`，所以 `4.5` 正常 |
 | **光标移开即清理组合** | 光标移开时若宿主只收走组合窗口，会留下「Rime 仍 composing、TSF 已无组合」的中间态：回到输入框时先前的字母还在却选不动，再打字又从零开始。现在隐藏 UI 即终止会话，并在按键前校验会话不变量 |
+| 退格三档语义 | `BackSpace` 删一个字符、`Shift+BackSpace` 删一整个拼音音节、`Ctrl+BackSpace` 清空整个候选框。后两者为确需的少量改动 |
 
-### 5. 关于裸 Shift 的全局切换（已停用）
+本项目的**自定义代码量刻意保持很小**：只有皮肤兼容层、小键盘处理器与上述几处稳定性修补。其余行为一律沿用上游小狼毫。
 
-早期版本常驻两个全局低层键鼠钩子，用于在「TSF 没有可编辑会话」时用裸 `Shift` 切换中英。
-**该功能已停用**，原因是诊断数据表明它在常见场景下根本不会生效：
+---
 
-2026-10-13 的一份 1766 行诊断日志里，10 次尝试全部停在同一个判据上：
+## 关于 Shift 切换中英文
 
+**这一条完全来自小狼毫的引擎本体，本项目没有改动它。**
+
+Shift 切中英是 **librime 引擎内置**的行为，由 `ascii_composer` 齿轮负责：
+
+```yaml
+# default.yaml（方案默认配置）
+ascii_composer:
+  switch_key:
+    Shift_L: commit_code      # 左 Shift 切中英
+    Shift_R: commit_code      # 右 Shift 切中英
+    Caps_Lock: noop
 ```
-[ARM-DENY] vk=160 has_kbd=1 can_toggle=0 no_mods=1
-[KEY] vk=160 down=1 ... arm_allowed=0 -> arm=1 | armed=0
-[KEY] vk=160 down=0 ... sched=0
-[SCHEDULE]/[TIMER]/[TOGGLE] 均为 0 次
+
+### 为什么只有短按才切换
+
+引擎对该按键设了 **500 毫秒的时长上限** —— 这是 librime 刻意设计的，不是 bug：
+
+```cpp
+// librime 源码 ascii_composer.cc
+} else if (!(shift_key_pressed_ || ctrl_key_pressed_)) {   // Shift 按下
+  shift_key_pressed_ = true;
+  // will not toggle unless the toggle key is released shortly
+  const auto toggle_duration_limit = std::chrono::milliseconds(500);
+  toggle_expired_ = now + toggle_duration_limit;
+}
+...
+// Shift 抬起：只有"还没超时"才切换
+if (((is_shift && shift_key_pressed_) || ...) && now < toggle_expired_) {
+  ToggleAsciiModeWithKey(ch);
+}
 ```
 
-即 `CanToggleIdleMode()` 返回假 —— 它要求 `m_active_session == 0`，也就是「TSF 没有可编辑
-会话」。所以能否切换取决于当时的焦点／会话状态，**与按键时长无关**（那 10 次的实际按住
-时长只有 0.2~0.6 秒）。
+源码里那句注释就是设计意图：**"除非切换键很快松开，否则不切换"**。它防的是把 Shift 当修饰键用之后误切模式 —— 比如 `Shift`+字母 打大写、`Shift`+方向键 选字，松手时不应该切换中英。
 
-既然可用性如此有限，就不值得为它常驻两个全局钩子：省掉每次按键的钩子开销，也避免全局
-钩子带来的一类风险。**中英切换现在完全由 TSF 层按常规方式处理**（输入框内 Shift 切模式、
-语言栏状态指示）。
+### 实际表现
 
-判定逻辑本身（`src/include/WeaselIdleShift.h`）与其 15 项回归断言
-（`src/test/TestSsfSkin/IdleShiftRegression.cpp`）作为可复用的实现保留着 ——
-将来若要换个触发条件重新启用，判定与测试都已经就绪。
+| 操作 | 是否切换 | 原因 |
+|---|---|---|
+| 输入框内 **短按** `Shift`（500 ms 内松开） | **切换** | 未超时，引擎执行切换 |
+| 输入框内 **长按** `Shift`（超过 500 ms） | **不切换** | 已超时，引擎有意忽略 |
+| `Shift` 期间按了别的键（如 `Shift+A` 打大写） | **不切换** | 引擎在遇到其它键时会清掉待命状态 |
+| **输入框外**（桌面、文件管理器等） | **不切换** | 没有 TSF 会话，按键不会进入 Rime 引擎 |
+
+### 本项目做了什么
+
+**什么都没做。** 这个 500 毫秒阈值是编译期常量：
+
+- 它**不可通过配置修改** —— `ascii_composer` 的配置项只读 `good_old_caps_lock` 与 `switch_key`，时长写在代码里
+- 要改它只能**重新编译 librime** 并替换 `rime.dll`（即替换整个输入引擎）
+- 本项目的 `rime.dll` 是**上游官方发布版**，未做改动
+
+早期版本曾尝试用两个全局低层键鼠钩子在"输入框外"也支持裸 Shift 切换，但实测该路径**从未生效**（其前提要求 TSF 当前没有可编辑会话，条件过窄），且常驻全局钩子有额外开销与风险。**该代码已彻底移除**，现在没有任何键鼠钩子。
+
+想要"长按也能切换"的话，唯一正路是自行编译 librime 并调整那个常量；本项目选择保持引擎原样。
 
 ---
 
 ## 目录结构
 
-本仓库直接位于小狼毫的**安装目录** `D:\Rime` 下，源码就在这一层的 `src/`，不再额外嵌套一层项目文件夹：
+本仓库直接位于小狼毫的**安装目录**下，源码就在这一层的 `src/`，不再额外嵌套一层项目文件夹：
 
 ```
 D:\Rime\                     # 仓库根 = 小狼毫安装目录
@@ -108,31 +165,21 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 │   ├── WeaselTSF/           #   TSF 输入服务：按键、焦点、候选列表、语言栏
 │   ├── WeaselUI/            #   候选窗渲染
 │   │   └── ssf/             #   ★ 搜狗 SSF 皮肤兼容层（本项目新增）
-│   ├── WeaselServer/        #   服务进程、托盘、空闲 Shift 钩子
+│   ├── WeaselServer/        #   服务进程与托盘
 │   ├── RimeWithWeasel/      #   引擎与 UI 的粘合、模式与选项处理
 │   ├── rime/lua/            #   ★ keypad_input.lua（小键盘混合输入，本项目新增）
-│   ├── include/             #   公共头（含 WeaselTsfIdentity.h 等）
+│   ├── include/             #   公共头
 │   ├── build-libs/          #   librime 导入库（编译前提，随仓库提供）
 │   ├── build-support/       #   构建/测试辅助脚本
-│   ├── test/TestSsfSkin/    #   回归测试与探针
-│   └── rime/lua/            #   ★ keypad_input.lua（小键盘混合输入，本项目新增）
+│   └── test/TestSsfSkin/    #   回归测试
 ├── assets/Color-P/          # 搜狗 Color-P 原始皮肤资源（skin.ini + 27 个图片）
 ├── rime-config/             # 运行时 Rime 配置
 │   ├── weasel.custom.yaml   #   启用 SSF 后端、配色、布局
-│   ├── default.custom.yaml  #   Shift 切中英、快捷键、方案列表
+│   ├── default.custom.yaml  #   方案列表与快捷键
 │   ├── rime_ice.custom.yaml #   ★ 处理器顺序与小键盘/翻页键绑定
 │   └── lua/keypad_input.lua #   ★ 小键盘混合输入处理器
+├── docs/                    # 全部文档
 ├── reference/               # 参考资料（第三方快照，非本项目代码）
-│   ├── librime-reference/   #   librime 源码，用于确认上游行为
-│   ├── ssfconv / 9ime/      #   SSF 转换与另一输入法的参考实现
-│   └── notes/               #   SSF 格式逆向笔记与预览图
-├── docs/                    # 全部文档（唯一一份，不再在 src/ 下重复）
-│   ├── ssf-skin.md                        # SSF 兼容层的设计与逆向记录
-│   ├── build-weasel.md                    # 构建说明
-│   ├── switch-latency-fix-20261007.md     # 切换输入法延迟修复
-│   ├── intuition-audit-20261007.md        # 行为审计（含已知取舍的依据）
-│   ├── comparison-with-weasel-and-sogou.md
-│   └── refactor-*.md / literal-commit-ui.md / host-compatibility-*.md
 ├── weasel-0.17.4/           # 已安装的小狼毫本体（第三方二进制，**不入库**）
 └── README.md
 ```
@@ -187,50 +234,13 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 4. 确认 `weasel.custom.yaml` 里的 `style/ssf_skin` 指向第 1 步的目录
 5. 托盘菜单 →「重新部署」
 
-### 自行制作安装器
+---
 
-```powershell
-# 需要 Inno Setup 6：winget install JRSoftware.InnoSetup
-# 载荷（上游安装器、皮肤素材、词库）各自从本机取，不进仓库，所以要先有：
-#   · 本仓库源码已编译出 src\dist
-#   · 本机已部署过小狼毫与皮肤
-pwsh -File .\src\installer\build-installer.ps1
-```
-
-产物在 `src\installer\output\`。脚本会校验打包数据里**不含个人数据**
-（`userdb`、`sync/`、`installation.yaml`、`user.yaml` 一律排除）。
-
-### 从源码编译
-
-```powershell
-# 需要 Boost 1.82 与 Visual Studio 2022；librime 与 WinSparkle 的导入库已随仓库提供
-pwsh -NoProfile -File .\src\build-weasel.ps1 -Both     # x64 + Win32
-pwsh -NoProfile -File .\src\build-weasel.ps1          # 只构建 x64
-```
-
-编译前提（都已在仓库里，约 0.6 MB）：
-
-| 位置 | 内容 | 来源 |
-|---|---|---|
-| `src\build-libs\` | librime 的 `rime_x64.lib` / `rime_x86.lib` | 取自随小狼毫分发的 `rime.dll` |
-| `src\lib\`、`src\lib64\` | `WinSparkle.lib`（x86 / x64 各一份） | 由对应架构的 `WinSparkle.dll` 导出表生成 |
-
-`winsparkle.h` 里有 `#pragma comment(lib, "WinSparkle.lib")`，两个架构的库同名，靠
-`lib\`（Win32）与 `lib64\`（x64）两个库目录区分。x64 那份取自安装目录的 64 位
-`WinSparkle.dll`；x86 那份取自官方安装包解包出的 32 位同名 DLL（官方 NSIS 安装包是 32 位载荷）。
-
-产物在 `src\dist\x64\` 与 `src\dist\x86\`。部署时需要同时替换：
-
-- 安装目录 `D:\Rime\weasel-0.17.4\` 下的 `WeaselServer.exe`、`weaselx64.dll`、`weasel.dll`
-- **`C:\Windows\System32\weasel.dll` 与 `C:\Windows\SysWOW64\weasel.dll`**（需要管理员权限；这两个文件被宿主进程映射，必须重启才能替换）
-
-`WeaselServer.exe` 运行时被占用，替换需要先停进程（或排重启替换）。
-
-### 日常操作
+## 日常操作
 
 | 操作 | 效果 |
 |---|---|
-| 输入框内裸 `Shift` | 切换中英文（由 TSF 层处理；见上文第 5 节，全局钩子那条路已停用） |
+| 输入框内裸 `Shift` | 切换中英文（**小狼毫引擎本体内置，仅短按生效**，详见 [上文](#关于-shift-切换中英文)） |
 | 切回小狼毫 | 必定是中文 |
 | 主键盘顶排 `1`–`9` | 选词 |
 | 有候选时 `-` / `=` | 前后翻页 |
@@ -245,6 +255,8 @@ pwsh -NoProfile -File .\src\build-weasel.ps1          # 只构建 x64
 
 ## 测试
 
+全部测试都可独立运行，不需要管理员权限：
+
 ```powershell
 # SSF 皮肤解析与布局（237 项）
 pwsh -NoProfile -File .\src\build-ssf-tests.ps1 -Run
@@ -258,37 +270,60 @@ pwsh -NoProfile -File .\src\build-panel-bench.ps1 -Run
 # 宿主兼容与 TSF 身份判定
 cmd /c .\src\build-support\test-host.cmd && .\src\dist\host-regression.exe
 
-# 「裸 Shift 切中英」状态机（15 项断言）
-cmd /c .\src\build-support\test-idle-shift.cmd && .\src\dist\idle-shift.exe
-```
+# TSF 输入法身份探针
+cmd /c .\src\build-support\build-tsf-probe.cmd
 
-### 性能测量工具
-
-以下三个工具用于回答具体的性能问题，输出的是实测微秒数，不是估算：
-
-```powershell
-# Lua 处理器每次按键的开销（需要 Python + lupa）
-python .\src\test\TestSsfSkin\bench_keypad.py .\rime-config\lua\keypad_input.lua
-
-# 显示路径查询与磁盘探测的开销（WeaselUserDataPath / is_regular_file）
-# 与一次完整响应帧的序列化+解析开销
-# 两者都是 probes/ 下的独立 .cpp，用 build-support\test-host.cmd 同样的命令编译即可
-```
-
-`src/test/TestSsfSkin/probes/` 下另有直接对真实 librime 的行为探针
-（`KeypadCaseProbe` 按场景逐个校验小键盘与标点形态），是排查标点问题的依据。
-
-安装器本身另有一套逻辑验证装置，不需要管理员权限即可跑：
-
-```powershell
+# 安装器逻辑验证（配置改写、边界输入、临时文件提取）
 pwsh -File .\src\installer\harness\run-harness.ps1
 ```
 
-它验证 `weasel.custom.yaml` 的按行改写（UTF-8 中文注释必须逐字节保留）、缺字段 /
-仅 LF / 无尾换行等边界输入、以及 `ExtractTemporaryFile` 能否取出 `dontcopy` 文件。
+---
 
-`src/test/TestSsfSkin/probes/` 下还有两个直接对真实 librime 的行为探针
-（`KeypadCaseProbe` 按场景逐个校验小键盘与标点形态），是排查标点问题的依据。
+## 从源码恢复与构建
+
+本仓库是**自包含**的：只要有它，就能重建输入法本体。
+
+### 编译
+
+```powershell
+# 需要 Boost 1.82+ 与 Visual Studio 2022；librime 与 WinSparkle 的导入库已随仓库提供
+pwsh -NoProfile -File .\src\build-weasel.ps1 -Both     # x64 + Win32
+pwsh -NoProfile -File .\src\build-weasel.ps1          # 只构建 x64
+```
+
+编译前提（都已在仓库里，约 0.6 MB）：
+
+| 位置 | 内容 | 来源 |
+|---|---|---|
+| `src\build-libs\` | librime 的 `rime_x64.lib` / `rime_x86.lib` | 取自随小狼毫分发的 `rime.dll` 的导出表 |
+| `src\lib\`、`src\lib64\` | `WinSparkle.lib`（x86 / x64 各一份） | 由对应架构的 `WinSparkle.dll` 导出表生成 |
+
+`winsparkle.h` 里有 `#pragma comment(lib, "WinSparkle.lib")`，两个架构的库同名，靠
+`lib\`（Win32）与 `lib64\`（x64）两个库目录区分。
+
+产物在 `src\dist\x64\` 与 `src\dist\x86\`。
+
+### 部署
+
+需要替换：
+
+- 安装目录 `weasel-0.17.4\` 下的 `WeaselServer.exe`、`weaselx64.dll`、`weasel.dll`
+- **`C:\Windows\System32\weasel.dll` 与 `C:\Windows\SysWOW64\weasel.dll`**（需要管理员权限；这两个文件被宿主进程映射，**必须重启才能替换**）
+
+`WeaselServer.exe` 运行时被占用，替换前需先停进程（或安排重启替换）。仓库提供了自动化的部署脚本 `src/DEPLOY-SOURCE-ASSETS.ps1`（会自行提权）。
+
+### 自行制作安装器
+
+```powershell
+# 需要 Inno Setup 6：winget install JRSoftware.InnoSetup
+# 载荷（上游安装器、皮肤素材、词库）各自从本机取，不进仓库，所以要先有：
+#   · 本仓库源码已编译出 src\dist
+#   · 本机已部署过小狼毫与皮肤
+pwsh -File .\src\installer\build-installer.ps1
+```
+
+产物在 `src\installer\output\`。脚本会校验打包数据里**不含个人数据**
+（`userdb`、`sync/`、`installation.yaml`、`user.yaml` 一律排除）。
 
 ---
 
@@ -302,6 +337,8 @@ pwsh -File .\src\installer\harness\run-harness.ps1
 - **中文模式下主键盘 `.` 输出 `。` 而不是小数点**：标点形态完全由中英模式决定，
   要打小数点请用小键盘的 `KP_Decimal`（它输出 ASCII `.`）。所以 `192.168.1.1`
   在中文模式下会变成 `192。168。1。1`
+- **裸 Shift 切换中英只在输入框内、且只在短按（500 ms 内）时生效** —— 这是小狼毫引擎
+  本体的既有行为，本项目未作改动，也不打算改（详见 [上文](#关于-shift-切换中英文)）
 
 `docs/intuition-audit-20261007.md` 记录了历史审计的依据；其中「全角标点下
 `. ^ [ $ { \ |` 输出全角 ASCII」与「组合未完成时切窗口丢弃输入」两条**已修复**，

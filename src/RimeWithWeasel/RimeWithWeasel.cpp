@@ -7,7 +7,6 @@
 
 #include <atlbase.h>
 #include <msctf.h>
-#include <WeaselTsfIdentity.h>
 
 #include <filesystem>
 #include <cstdlib>
@@ -514,16 +513,6 @@ void RimeWithWeaselHandler::FocusIn(DWORD client_caps, WeaselSessionId ipc_id) {
   m_focus_tip_pending = 0;
 }
 
-void RimeWithWeaselHandler::ToggleIdleMode() {
-  if (!CanToggleIdleMode()) return;
-  m_shared_ascii_mode = !m_shared_ascii_mode;
-  for (auto& pair : m_session_status_map)
-    rime_api->set_option(pair.second.session_id, "ascii_mode", m_shared_ascii_mode);
-  // No editable caret exists: retain the mode, never show at stale coordinates.
-  m_focus_tip_pending = 0;
-  if (m_ui) m_ui->Hide();
-}
-
 void RimeWithWeaselHandler::FocusOut(DWORD param, WeaselSessionId ipc_id) {
   DLOG(INFO) << "Focus out: ipc_id = " << ipc_id;
   if (param & 0x80000000u) m_profile_active = false;
@@ -755,58 +744,6 @@ void RimeWithWeaselHandler::OnUpdateUI(std::function<void()> const& cb) {
 // c_clsidTextService in Globals.cpp.  WeaselServer and WeaselTSF are separate
 // binaries with separate Globals, so the value lives in a shared header.
 //
-// Getting this right matters more than it looks.  Measured on this machine,
-// GetActiveProfile keeps reporting WEASEL even after the user selects the US
-// keyboard layout, so "is the active profile Weasel" is NOT enough to tell the
-// two apart -- an earlier attempt used exactly that and Shift kept toggling
-// while the US layout was selected.
-//
-// What does change is the layout of the foreground thread: 0x08040804
-// (langid 0x0804) with Weasel, 0x04090409 (langid 0x0409) with the US layout.
-// So the test is whether the layout the user's foreground thread actually has
-// selected belongs to the same language as the active profile.
-bool RimeWithWeaselHandler::WeaselHasForegroundKeyboard() {
-  // The keyboard hook calls this on every Shift press, so throttle the COM
-  // query.  A stale answer for a few hundred milliseconds is harmless: it is
-  // only consulted for a deliberate Shift tap.
-  static ULONGLONG checked_at = 0;
-  static bool is_weasel = false;
-  const ULONGLONG now = GetTickCount64();
-  if (checked_at != 0 && now - checked_at < 200) return is_weasel;
-  checked_at = now;
-
-  // The active profile is per input thread, and the user is typing in the
-  // foreground window's thread.  GetKeyboardLayout(0) would report this
-  // message-loop thread instead.
-  HWND foreground = ::GetForegroundWindow();
-  if (!foreground) return (is_weasel = false);
-  const DWORD thread = ::GetWindowThreadProcessId(foreground, nullptr);
-  if (!thread) return (is_weasel = false);
-  const HKL foreground_hkl = ::GetKeyboardLayout(thread);
-  if (!foreground_hkl) return (is_weasel = false);
-
-  CComPtr<ITfInputProcessorProfileMgr> profile_mgr;
-  if (FAILED(profile_mgr.CoCreateInstance(CLSID_TF_InputProcessorProfiles,
-                                          nullptr, CLSCTX_ALL)))
-    return (is_weasel = false);
-
-  TF_INPUTPROCESSORPROFILE profile = {};
-  if (FAILED(profile_mgr->GetActiveProfile(GUID_TFCAT_TIP_KEYBOARD, &profile)))
-    return (is_weasel = false);
-
-  if (!weasel_tsf::ProfileIsWeasel(profile.clsid))
-    return (is_weasel = false);
-
-  // The decisive comparison: the layout the foreground thread has selected must
-  // be in the same language as the Weasel profile.  Selecting the US layout
-  // moves the thread to langid 0x0409 and the toggle is refused.
-  const LANGID thread_langid =
-      LOWORD(reinterpret_cast<ULONG_PTR>(foreground_hkl));
-  is_weasel = weasel_tsf::LayoutLanguageMatchesProfile(thread_langid,
-                                                       profile.langid);
-  return is_weasel;
-}
-
 bool RimeWithWeaselHandler::_IsDeployerRunning() {
   HANDLE hMutex = CreateMutex(NULL, TRUE, L"WeaselDeployerMutex");
   bool deployer_detected = hMutex && GetLastError() == ERROR_ALREADY_EXISTS;
