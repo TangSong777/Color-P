@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   暂存安装器载荷并编译出单文件安装器。
 
@@ -27,8 +27,8 @@
 param(
   [switch]$SkipCompile,
   [string]$UpstreamInstaller,
-  [string]$WeaselRoot = 'D:\Rime\weasel-0.17.4',
-  [string]$SkinDir    = 'C:\ProgramData\ColorPWeasel\Color-P',
+  [string]$WeaselRoot,
+  [string]$SkinDir,
   [string]$RimeUserDir
 )
 
@@ -41,6 +41,37 @@ $UpstreamVer = '0.17.4'
 
 function Say([string]$m) { Write-Host "  $m" }
 function Head([string]$m) { Write-Host "`n=== $m ===" -ForegroundColor Cyan }
+
+# ---------------------------------------------------------------- 已装的小狼毫
+# 原先这里写死 D:\Rime\weasel-0.17.4。改为：命令行参数 > 注册表 > 常见位置。
+# 注册表项正是小狼毫自己写的安装位置，比猜目录可靠。
+if (-not $WeaselRoot) {
+  foreach ($hive in @('HKLM:\SOFTWARE\Rime\Weasel', 'HKLM:\SOFTWARE\WOW6432Node\Rime\Weasel')) {
+    $v = (Get-ItemProperty $hive -Name WeaselRoot -ErrorAction SilentlyContinue).WeaselRoot
+    if ($v -and (Test-Path (Join-Path $v 'WeaselServer.exe'))) { $WeaselRoot = $v; break }
+  }
+}
+if (-not $WeaselRoot) {
+  $cands = @("$env:ProgramFiles\Rime\weasel-$UpstreamVer",
+             "${env:ProgramFiles(x86)}\Rime\weasel-$UpstreamVer",
+             "D:\Rime\weasel-$UpstreamVer", "C:\Rime\weasel-$UpstreamVer")
+  $WeaselRoot = $cands | Where-Object { Test-Path (Join-Path $_ 'WeaselServer.exe') } | Select-Object -First 1
+}
+if (-not $WeaselRoot) {
+  throw "找不到已安装的小狼毫。用 -WeaselRoot 指定其目录（需含 WeaselServer.exe）。"
+}
+
+# ---------------------------------------------------------------- 皮肤目录
+if (-not $SkinDir) {
+  foreach ($c in @("$env:ProgramData\ColorPWeasel\Color-P",
+                   "$env:LOCALAPPDATA\ColorPWeasel\Color-P",
+                   "D:\Rime\ColorPWeasel\Color-P")) {
+    if ($c -and (Test-Path (Join-Path $c 'skin.ini'))) { $SkinDir = $c; break }
+  }
+}
+if (-not $SkinDir) {
+  throw "找不到已部署的 Color-P 皮肤（需含 skin.ini）。用 -SkinDir 指定。"
+}
 
 # ---------------------------------------------------------------- Rime 用户目录
 if (-not $RimeUserDir) {

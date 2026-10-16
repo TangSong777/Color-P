@@ -1,4 +1,4 @@
-# Build and run the SSF compatibility layer unit tests.
+﻿# Build and run the SSF compatibility layer unit tests.
 #
 # Compiles only the platform-free SSF sources, so no ATL/WTL/Boost/librime is
 # needed -- the tests run in a fraction of a second and can be re-run freely
@@ -11,9 +11,13 @@ param([switch]$Run)
 $ErrorActionPreference = 'Stop'
 
 $Root    = $PSScriptRoot
-$VcVars  = 'D:\VisualStudio2022\VC\Auxiliary\Build\vcvars64.bat'
-$SdkInc  = 'D:\Windows Kits\10\Include\10.0.26100.0'
-$MsvcInc  = 'D:\VisualStudio2022\VC\Tools\MSVC\14.44.35207\include'
+# 工具链位置由 build-support\Find-Toolchain.ps1 探测（可用环境变量覆盖）。
+. (Join-Path $Root 'build-support\Find-Toolchain.ps1')
+$VcVars  = Get-VcVarsPath x64
+$SdkInc  = Get-SdkIncludeDir
+$SdkLib  = Get-SdkLibDir x64
+$MsvcInc = Join-Path (Get-MsvcRoot) 'include'
+$MsvcLib = Join-Path (Get-MsvcRoot) 'lib\x64'
 $OutDir  = Join-Path $Root 'dist'
 $ObjDir  = Join-Path $Root 'msbuild\ssf_tests'
 
@@ -78,9 +82,9 @@ $exe = Join-Path $OutDir 'ssf_tests.exe'
 $objArgs = ($objs | ForEach-Object { "`"$_`"" }) -join ' '
 
 $link = "link.exe /nologo /OUT:`"$exe`" /SUBSYSTEM:CONSOLE /MACHINE:X64 " +
-        "/LIBPATH:`"D:\Windows Kits\10\Lib\10.0.26100.0\ucrt\x64`" " +
-        "/LIBPATH:`"D:\Windows Kits\10\Lib\10.0.26100.0\um\x64`" " +
-        "/LIBPATH:`"D:\VisualStudio2022\VC\Tools\MSVC\14.44.35207\lib\x64`" " +
+        "/LIBPATH:`"$SdkLib\ucrt\x64`" " +
+        "/LIBPATH:`"$SdkLib\um\x64`" " +
+        "/LIBPATH:`"$MsvcLib`" " +
         "$objArgs kernel32.lib user32.lib"
 $out = cmd /c "call `"$VcVars`" >nul 2>&1 && $link" 2>&1
 if ($LASTEXITCODE -ne 0) {

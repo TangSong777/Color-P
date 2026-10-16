@@ -1,4 +1,4 @@
-# Build the standalone panel-recreate benchmark.
+﻿# Build the standalone panel-recreate benchmark.
 #
 # Compiles the WeaselUI sources (including the SSF renderer) together with
 # test\TestSsfSkin\PanelRecreateBench.cpp and links a console executable.  This
@@ -12,11 +12,13 @@ param([switch]$Run)
 $ErrorActionPreference = 'Stop'
 
 $Root    = $PSScriptRoot
-$VcVars  = 'D:\VisualStudio2022\VC\Auxiliary\Build\vcvars64.bat'
-$SdkInc  = 'D:\Windows Kits\10\Include\10.0.26100.0'
-$SdkLib  = 'D:\Windows Kits\10\Lib\10.0.26100.0'
-$MsvcVer = '14.44.35207'
-$Msvc    = "D:\VisualStudio2022\VC\Tools\MSVC\$MsvcVer"
+# 工具链位置由 build-support\Find-Toolchain.ps1 探测（可用环境变量覆盖）。
+# 原先这里写死了本机的 MSVC 版本号目录，换台机器就会指错。
+. (Join-Path $Root 'build-support\Find-Toolchain.ps1')
+$VcVars  = Get-VcVarsPath x64
+$SdkInc  = Get-SdkIncludeDir
+$SdkLib  = Get-SdkLibDir x64
+$Msvc    = Get-MsvcRoot
 $OutDir  = Join-Path $Root 'dist'
 $ObjDir  = Join-Path $Root 'msbuild\panel_bench'
 $Exe     = Join-Path $OutDir 'panel-bench.exe'

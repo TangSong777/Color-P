@@ -1,4 +1,4 @@
-# Build a deployable Weasel (小狼毫) from this source tree.
+﻿# Build a deployable Weasel (小狼毫) from this source tree.
 #
 # Background
 # ----------
@@ -43,7 +43,10 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $Root      = $PSScriptRoot
-$MsBuild   = 'D:\VisualStudio2022\MSBuild\Current\Bin\MSBuild.exe'
+# 工具链位置统一由 build-support\Find-Toolchain.ps1 探测（支持环境变量覆盖），
+# 脚本里不再写死本机的 VS / SDK / Boost 路径。
+. (Join-Path $Root 'build-support\Find-Toolchain.ps1')
+$MsBuild   = Get-MsBuildPath
 # librime 的导入库随仓库提供，放在源码树的 build-libs 下，脚本因此可搬运。
 $LibsX64   = Join-Path $Root 'build-libs\rime_x64.lib'
 $LibsX86   = Join-Path $Root 'build-libs\rime_x86.lib'
@@ -62,6 +65,7 @@ $DistDir   = Join-Path $Root 'dist'
 # 可用环境变量覆盖探测结果：WEASEL_BOOST_ROOT、WEASEL_SDK_ROOT、
 # WEASEL_MSVC_ROOT、WEASEL_SDK_VER。
 function Resolve-WeaselProps {
+  param([string]$PlatformToolset = 'v143')
   # 位置以 .vcxproj 的 Import 实际解析结果为准。各工程文件写的是
   # <Import Project="..\weasel.props" />，MSBuild 最终在 src\ 下找它
   # （见 docs/build-weasel.md 与实测报错路径），所以生成到 $Root。
@@ -71,57 +75,17 @@ function Resolve-WeaselProps {
     return $propsPath
   }
 
-  $boost = if ($env:WEASEL_BOOST_ROOT) { $env:WEASEL_BOOST_ROOT } else { 'D:\boost182' }
-  $sdkRoot = if ($env:WEASEL_SDK_ROOT) { $env:WEASEL_SDK_ROOT } else { 'D:\Windows Kits\10' }
-
-  # VS 安装根目录：优先问 vswhere，失败再回退到已知路径。不靠从 MSBuild.exe
-  # 的位置往上推 —— 那个层级关系在不同 VS 版本/布局下并不一致。
-  $vsRoot = $env:WEASEL_VS_ROOT
-  if (-not $vsRoot) {
-    $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-    if (Test-Path $vswhere) {
-      $found = & $vswhere -latest -property installationPath 2>$null
-      if ($found) { $vsRoot = $found.Trim() }
-    }
-  }
-  if (-not $vsRoot) {
-    foreach ($cand in @('D:\VisualStudio2022', 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise',
-                        'C:\Program Files\Microsoft Visual Studio\2022\Community',
-                        'C:\Program Files\Microsoft Visual Studio\2022\Professional')) {
-      if (Test-Path (Join-Path $cand 'VC\Tools\MSVC')) { $vsRoot = $cand; break }
-    }
-  }
-  if (-not $vsRoot) { throw "找不到 Visual Studio 安装目录（用 WEASEL_VS_ROOT 指定）" }
-
-  # MSVC 工具集目录带版本号，探测一下，避免写死。
-  $msvcRoot = $env:WEASEL_MSVC_ROOT
-  if (-not $msvcRoot) {
-    $cand = Get-ChildItem (Join-Path $vsRoot 'VC\Tools\MSVC') -Directory -ErrorAction SilentlyContinue |
-            Sort-Object Name -Descending | Select-Object -First 1
-    if ($cand) { $msvcRoot = $cand.FullName } else { $msvcRoot = Join-Path $vsRoot 'VC\Tools\MSVC' }
-  }
-
-  # 同样探测 Windows SDK 版本。
-  $sdkVer = $env:WEASEL_SDK_VER
-  if (-not $sdkVer) {
-    $cand = Get-ChildItem (Join-Path $sdkRoot 'Include') -Directory -ErrorAction SilentlyContinue |
-            Where-Object { $_.Name -match '^\d+\.\d+\.\d+\.\d+$' } |
-            Sort-Object { [version]$_.Name } -Descending | Select-Object -First 1
-    if ($cand) { $sdkVer = $cand.Name } else { $sdkVer = '10.0.26100.0' }
-  }
-
-  if (-not (Test-Path $boost)) {
-    Write-Warning "Boost 目录不存在: $boost（编译会失败；用 WEASEL_BOOST_ROOT 指定）"
-  }
-  if (-not (Test-Path $msvcRoot)) {
-    throw "MSVC 工具集目录不存在: $msvcRoot（用 WEASEL_MSVC_ROOT 指定）"
-  }
+  # 全部走共享探测模块（环境变量覆盖优先，其次 vswhere，最后常见目录）。
+  $boost   = Get-BoostRoot
+  $sdkRoot = Get-SdkRoot
+  $sdkVer  = Get-SdkVersion
+  $msvcRoot = Get-MsvcRoot
 
   $template = Join-Path $Root 'weasel.props.in'
   if (-not (Test-Path $template)) { throw "缺少生成模板: $template" }
   $xml = Get-Content $template -Raw
   $xml = $xml.Replace('@BOOST_ROOT@', $boost)
-  $xml = $xml.Replace('@PLATFORM_TOOLSET@', 'v143')
+  $xml = $xml.Replace('@PLATFORM_TOOLSET@', $PlatformToolset)
   $xml = $xml.Replace('@SDK_ROOT@', $sdkRoot)
   $xml = $xml.Replace('@SDK_VER@', $sdkVer)
   $xml = $xml.Replace('@MSVC_ROOT@', $msvcRoot)
@@ -144,16 +108,15 @@ function Invoke-WeaselBuild {
 
   Write-Host "=== Building Weasel $Configuration / $Platform ==="
 
-  # Every Weasel project resolves Boost libraries as $(BOOST_ROOT)\stage\lib
-  # with no per-platform subdirectory, and both platforms emit an import library
-  # literally named "rime.lib" (into lib/ vs lib64/). So the correct rime.lib
-  # must be staged immediately before each platform build; the two cannot
-  # coexist. Boost is easier: the x64 and x86 archives differ by the
-  # "-x64-"/"-x32-" token in the filename, so both sets can sit side by side in
-  # one directory and MSVC's auto-link pragma selects the right one.
-  $boostStage   = 'D:\boost182\stage\lib'
-  $boostStage32 = 'D:\boost182\stage32\lib'
-
+  # 各 Weasel 工程按 $(BOOST_ROOT)\stage\lib 解析 Boost 库（不带平台子目录），
+  # 而两个平台都会产出同名的 rime.lib（分别落在 lib/ 与 lib64/）。所以正确的
+  # rime.lib 必须在每个平台构建前临时摆放；两者无法共存。Boost 则相反：x64 与
+  # x86 的存档靠文件名里的 "-x64-"/"-x32-" 区分，可以并存于同一目录，由 MSVC 的
+  # auto-link pragma 自行选择。
+  $boostRoot    = Get-BoostRoot
+  $boostStage   = Get-BoostStageDir x64
+  $boostStage32 = Get-BoostStageDir x86
+  # stage32 的库要与 stage 合并摆放（见上方说明）。
   Get-ChildItem "$boostStage32\*.lib" -ErrorAction SilentlyContinue |
     ForEach-Object { if (-not (Test-Path (Join-Path $boostStage $_.Name))) { throw "Boost library missing" } }
 
@@ -174,7 +137,7 @@ function Invoke-WeaselBuild {
     "/p:Configuration=$Configuration",
     "/p:Platform=$Platform",
     "/p:WEASEL_ROOT=$Root",
-    '/p:BOOST_ROOT=D:\boost182',
+    "/p:BOOST_ROOT=$boostRoot",
     '/v:minimal', '/nologo', '/nr:false', '/m:1'
   )
   # MSBuild constructs its tool Path. Inheriting upper-case PATH as well can

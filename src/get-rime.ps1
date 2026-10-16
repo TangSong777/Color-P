@@ -1,4 +1,4 @@
-param (
+﻿param (
   [switch]$h, [string]$help, [string]$proxy, [string]$tag, [string]$os, [string]$build_variant, [boolean]$extract, [string]$use
 )
 if ($h -or $help -eq "--help") {
