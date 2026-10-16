@@ -29,7 +29,17 @@ compile_commands.json
 /output/data/*.yaml
 /output/archives
 /include/glog
+# 上游的 get-rime.ps1 会把下载来的 librime 头文件复制到 /include，所以这里默认
+# 忽略。但那样仓库就不自包含（克隆后必须先联网跑 get-rime.ps1 才能编译），
+# 因此这 4 个必需的头文件改为入库，见下面的否定规则。
 /include/rime*.h
+# RimeWithWeasel.h 是**本项目自己的**头文件，只因首字母大写 R 被上面那条
+# （大小写不敏感）一并排除，导致长期未入库、克隆后编译直接失败。必须保留。
+!/include/RimeWithWeasel.h
+# librime 的公开头（BSD-3，版权归 RIME Developers），随仓库提供以便离线编译。
+!/include/rime_api.h
+!/include/rime_levers_api.h
+!/include/rime_api_impl.h
 /ipch
 env.bat
 weasel.props
