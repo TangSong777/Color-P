@@ -36,6 +36,7 @@
 
 param(
   [switch]$Both,
+  [switch]$RegenerateProps,
   [string]$Configuration = 'Release'
 )
 
@@ -48,8 +49,95 @@ $LibsX64   = Join-Path $Root 'build-libs\rime_x64.lib'
 $LibsX86   = Join-Path $Root 'build-libs\rime_x86.lib'
 $DistDir   = Join-Path $Root 'dist'
 
+# ---------------------------------------------------------------------------
+# 生成 weasel.props
+# ---------------------------------------------------------------------------
+# 各个 .vcxproj 里写的是 <Import Project="..\weasel.props" />，也就是**仓库根的
+# 上一层**。上游的做法是让你从 weasel.props.template 复制一份、填好本机路径、
+# 放在那里 —— 于是仓库不自包含：换台机器克隆下来必然报
+#   error MSB4019: 找不到导入的项目 "...\weasel.props"
+# 这里改成由脚本生成到 .vcxproj 真正导入的位置（仓库根的上一层），路径自动探测。
+# 已经存在就不覆盖（便于手工定制）；想强制重生成加 -RegenerateProps。
+#
+# 可用环境变量覆盖探测结果：WEASEL_BOOST_ROOT、WEASEL_SDK_ROOT、
+# WEASEL_MSVC_ROOT、WEASEL_SDK_VER。
+function Resolve-WeaselProps {
+  # 位置以 .vcxproj 的 Import 实际解析结果为准。各工程文件写的是
+  # <Import Project="..\weasel.props" />，MSBuild 最终在 src\ 下找它
+  # （见 docs/build-weasel.md 与实测报错路径），所以生成到 $Root。
+  $propsPath = Join-Path $Root 'weasel.props'
+  if ((Test-Path $propsPath) -and -not $RegenerateProps) {
+    Write-Host "  == weasel.props 已存在，沿用 ($propsPath)"
+    return $propsPath
+  }
+
+  $boost = if ($env:WEASEL_BOOST_ROOT) { $env:WEASEL_BOOST_ROOT } else { 'D:\boost182' }
+  $sdkRoot = if ($env:WEASEL_SDK_ROOT) { $env:WEASEL_SDK_ROOT } else { 'D:\Windows Kits\10' }
+
+  # VS 安装根目录：优先问 vswhere，失败再回退到已知路径。不靠从 MSBuild.exe
+  # 的位置往上推 —— 那个层级关系在不同 VS 版本/布局下并不一致。
+  $vsRoot = $env:WEASEL_VS_ROOT
+  if (-not $vsRoot) {
+    $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+    if (Test-Path $vswhere) {
+      $found = & $vswhere -latest -property installationPath 2>$null
+      if ($found) { $vsRoot = $found.Trim() }
+    }
+  }
+  if (-not $vsRoot) {
+    foreach ($cand in @('D:\VisualStudio2022', 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise',
+                        'C:\Program Files\Microsoft Visual Studio\2022\Community',
+                        'C:\Program Files\Microsoft Visual Studio\2022\Professional')) {
+      if (Test-Path (Join-Path $cand 'VC\Tools\MSVC')) { $vsRoot = $cand; break }
+    }
+  }
+  if (-not $vsRoot) { throw "找不到 Visual Studio 安装目录（用 WEASEL_VS_ROOT 指定）" }
+
+  # MSVC 工具集目录带版本号，探测一下，避免写死。
+  $msvcRoot = $env:WEASEL_MSVC_ROOT
+  if (-not $msvcRoot) {
+    $cand = Get-ChildItem (Join-Path $vsRoot 'VC\Tools\MSVC') -Directory -ErrorAction SilentlyContinue |
+            Sort-Object Name -Descending | Select-Object -First 1
+    if ($cand) { $msvcRoot = $cand.FullName } else { $msvcRoot = Join-Path $vsRoot 'VC\Tools\MSVC' }
+  }
+
+  # 同样探测 Windows SDK 版本。
+  $sdkVer = $env:WEASEL_SDK_VER
+  if (-not $sdkVer) {
+    $cand = Get-ChildItem (Join-Path $sdkRoot 'Include') -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match '^\d+\.\d+\.\d+\.\d+$' } |
+            Sort-Object { [version]$_.Name } -Descending | Select-Object -First 1
+    if ($cand) { $sdkVer = $cand.Name } else { $sdkVer = '10.0.26100.0' }
+  }
+
+  if (-not (Test-Path $boost)) {
+    Write-Warning "Boost 目录不存在: $boost（编译会失败；用 WEASEL_BOOST_ROOT 指定）"
+  }
+  if (-not (Test-Path $msvcRoot)) {
+    throw "MSVC 工具集目录不存在: $msvcRoot（用 WEASEL_MSVC_ROOT 指定）"
+  }
+
+  $template = Join-Path $Root 'weasel.props.in'
+  if (-not (Test-Path $template)) { throw "缺少生成模板: $template" }
+  $xml = Get-Content $template -Raw
+  $xml = $xml.Replace('@BOOST_ROOT@', $boost)
+  $xml = $xml.Replace('@PLATFORM_TOOLSET@', 'v143')
+  $xml = $xml.Replace('@SDK_ROOT@', $sdkRoot)
+  $xml = $xml.Replace('@SDK_VER@', $sdkVer)
+  $xml = $xml.Replace('@MSVC_ROOT@', $msvcRoot)
+
+  New-Item -ItemType Directory -Force -Path (Split-Path $propsPath -Parent) | Out-Null
+  Set-Content -Path $propsPath -Value $xml -Encoding UTF8
+  Write-Host "  -> 生成 weasel.props ($propsPath)"
+  Write-Host "     BOOST_ROOT=$boost"
+  Write-Host "     MSVC=$msvcRoot"
+  Write-Host "     SDK=$sdkRoot\$sdkVer"
+  return $propsPath
+}
+
 if (-not (Test-Path $MsBuild)) { throw "MSBuild not found: $MsBuild" }
 New-Item -ItemType Directory -Force -Path $DistDir | Out-Null
+Resolve-WeaselProps | Out-Null
 
 function Invoke-WeaselBuild {
   param([string]$Platform)

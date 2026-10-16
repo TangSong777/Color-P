@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- weasel.props 的生成模板，由 build-weasel.ps1 的 Resolve-WeaselProps 填充。
+     占位符：@BOOST_ROOT@ @PLATFORM_TOOLSET@ @SDK_ROOT@ @SDK_VER@ @MSVC_ROOT@
+     上游的 weasel.props.template 只有 BOOST_ROOT / PLATFORM_TOOLSET 两个替换点，
+     外加版本宏；这里额外带上 rc.exe 需要的 SDK / MSVC 路径（本机专有，必须探测）。 -->
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="UserMacros">
+    <BOOST_ROOT>@BOOST_ROOT@</BOOST_ROOT>
+    <PLATFORM_TOOLSET>@PLATFORM_TOOLSET@</PLATFORM_TOOLSET>
+    <VERSION_MAJOR>0</VERSION_MAJOR>
+    <VERSION_MINOR>17</VERSION_MINOR>
+    <VERSION_PATCH>4</VERSION_PATCH>
+    <PRODUCT_VERSION>0.17.4.0</PRODUCT_VERSION>
+    <FILE_VERSION>0.17.4.0</FILE_VERSION>
+    <!-- Set independently of $(MSBuildThisFileDirectory) so it can also be
+         supplied from the command line; the .rc include path below uses it. -->
+    <WEASEL_ROOT Condition="'$(WEASEL_ROOT)' == ''">$(MSBuildThisFileDirectory)</WEASEL_ROOT>
+    <!-- Toolchain locations for rc.exe. Override with the WEASEL_SDK_ROOT /
+         WEASEL_MSVC_ROOT / WEASEL_SDK_VER environment variables and regenerate. -->
+    <WEASEL_SDK_ROOT>@SDK_ROOT@</WEASEL_SDK_ROOT>
+    <WEASEL_SDK_VER>@SDK_VER@</WEASEL_SDK_VER>
+    <WEASEL_MSVC_ROOT>@MSVC_ROOT@</WEASEL_MSVC_ROOT>
+    <WEASEL_SDK_INC_UCRT>$(WEASEL_SDK_ROOT)\Include\$(WEASEL_SDK_VER)\ucrt</WEASEL_SDK_INC_UCRT>
+    <WEASEL_SDK_INC_SHARED>$(WEASEL_SDK_ROOT)\Include\$(WEASEL_SDK_VER)\shared</WEASEL_SDK_INC_SHARED>
+    <WEASEL_SDK_INC_UM>$(WEASEL_SDK_ROOT)\Include\$(WEASEL_SDK_VER)\um</WEASEL_SDK_INC_UM>
+    <WEASEL_MSVC_INC>$(WEASEL_MSVC_ROOT)\include</WEASEL_MSVC_INC>
+  </PropertyGroup>
+  <ItemGroup>
+    <BuildMacro Include="BOOST_ROOT">
+      <Value>$(BOOST_ROOT)</Value>
+    </BuildMacro>
+    <BuildMacro Include="PLATFORM_TOOLSET">
+      <Value>$(PLATFORM_TOOLSET)</Value>
+    </BuildMacro>
+  </ItemGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>VERSION_MAJOR=$(VERSION_MAJOR);VERSION_MINOR=$(VERSION_MINOR);VERSION_PATCH=$(VERSION_PATCH);PRODUCT_VERSION=$(PRODUCT_VERSION);FILE_VERSION=$(FILE_VERSION);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/utf-8</AdditionalOptions>
+    </ClCompile>
+    <ResourceCompile>
+      <!-- rc.exe needs, in this order:
+             1. the Windows SDK + MSVC include dirs, so winres.h/windows.h (and
+                therefore LANG_CHINESE / SUBLANG_CHINESE_SIMPLIFIED) resolve.
+                Without them rc reports "PRIMARY LANGUAGE ID not a number" and
+                then mis-parses every following resource as a filename
+                ("file not found: 100", "file not found: FEEDURL").
+             2. build-support, our MFC-free afxres.h shim (see that file). -->
+      <AdditionalOptions>/I"$(WEASEL_SDK_INC_UCRT)" /I"$(WEASEL_SDK_INC_SHARED)" /I"$(WEASEL_SDK_INC_UM)" /I"$(WEASEL_MSVC_INC)" /I"$(WEASEL_ROOT)\build-support" %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>$(PreprocessorDefinitions);VERSION_MAJOR=$(VERSION_MAJOR);VERSION_MINOR=$(VERSION_MINOR);VERSION_PATCH=$(VERSION_PATCH);PRODUCT_VERSION=$(PRODUCT_VERSION);FILE_VERSION=$(FILE_VERSION);</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+</Project>
