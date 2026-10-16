@@ -281,27 +281,48 @@ pwsh -File .\src\installer\harness\run-harness.ps1
 
 ## 从源码恢复与构建
 
-本仓库是**自包含**的：只要有它，就能重建输入法本体。
+本仓库是**自包含**的：只要有它，就能从零重建输入法本体 —— 已用"克隆到全新目录后
+直接编译"实测验证过，不需要联网、不需要任何手工前置文件。
+
+```powershell
+git clone https://github.com/TangSong777/Color-P.git
+cd Color-P
+pwsh -NoProfile -File .\src\build-weasel.ps1 -Both
+```
+
+（约 2.5 分钟，产出 x64 与 x86 两套二进制。）
 
 ### 编译
 
 ```powershell
-# 需要 Boost 1.82+ 与 Visual Studio 2022；librime 与 WinSparkle 的导入库已随仓库提供
+# 需要 Boost 1.82+ 与 Visual Studio 2022；librime 头文件与导入库、WinSparkle 导入库
+# 都已随仓库提供，克隆下来即可直接编译，不需要联网或任何手工前置文件。
 pwsh -NoProfile -File .\src\build-weasel.ps1 -Both     # x64 + Win32
 pwsh -NoProfile -File .\src\build-weasel.ps1          # 只构建 x64
 ```
 
-编译前提（都已在仓库里，约 0.6 MB）：
+`weasel.props`（上游要求你从模板复制并手填本机路径的那份）现在由脚本**自动生成**：
+VS 安装位置用 `vswhere` 探测，MSVC 工具集与 Windows SDK 版本按目录名探测。
+如果你的环境比较特殊，可用这些环境变量覆盖后加 `-RegenerateProps` 重新生成：
+
+| 环境变量 | 含义 | 默认 |
+|---|---|---|
+| `WEASEL_BOOST_ROOT` | Boost 源码目录 | `D:\boost182` |
+| `WEASEL_VS_ROOT` | Visual Studio 安装目录 | `vswhere` 探测 |
+| `WEASEL_SDK_ROOT` | Windows SDK 根 | `D:\Windows Kits\10` |
+| `WEASEL_MSVC_ROOT` | MSVC 工具集目录 | 目录名探测 |
+| `WEASEL_SDK_VER` | Windows SDK 版本 | 目录名探测 |
+
+随仓库提供的编译前提（约 0.6 MB + 三个头文件）：
 
 | 位置 | 内容 | 来源 |
 |---|---|---|
 | `src\build-libs\` | librime 的 `rime_x64.lib` / `rime_x86.lib` | 取自随小狼毫分发的 `rime.dll` 的导出表 |
+| `src\include\rime_api.h` 等 | librime 公开头（BSD-3） | 随仓库提供，用于离线编译 |
 | `src\lib\`、`src\lib64\` | `WinSparkle.lib`（x86 / x64 各一份） | 由对应架构的 `WinSparkle.dll` 导出表生成 |
 
-`winsparkle.h` 里有 `#pragma comment(lib, "WinSparkle.lib")`，两个架构的库同名，靠
-`lib\`（Win32）与 `lib64\`（x64）两个库目录区分。
-
-产物在 `src\dist\x64\` 与 `src\dist\x86\`。
+产物在 `src\dist\x64\` 与 `src\dist\x86\`：
+`weaselx64.dll`、`weasel.dll`、`WeaselServer.exe`、`WeaselDeployer.exe`、`WeaselSetup.exe`。
 
 ### 部署
 
