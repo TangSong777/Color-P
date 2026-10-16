@@ -9,6 +9,9 @@ HHOOK idle_keyboard_hook = nullptr;
 HHOOK idle_mouse_hook = nullptr;
 // 裸 Shift 切换中英文的状态机。判定本身在 WeaselIdleShift.h 里（可单测），
 // 这里只负责把事件喂进去并执行它给出的动作。
+//
+// 注意：键鼠钩子的安装已停用（原因见 Run() 里的说明）。这套回调与状态机保留着，
+// 将来若要恢复该功能，重新接线即可。
 weasel_idle_shift::State idle_shift;
 UINT_PTR idle_shift_timer = 0;
 
@@ -142,13 +145,32 @@ int WeaselServerApp::Run() {
   m_server.SetTrayRefreshCallback([this]() { tray_icon.ApplyRefresh(); });
   tray_icon.RequestRefresh();
 
-  // Only handle bare Shift when TSF has no editable session. Hooks never eat
-  // events or retain input text; actual Rime work is deferred to our loop.
-  idle_mode_handler = m_handler.get();
-  idle_keyboard_hook = SetWindowsHookEx(WH_KEYBOARD_LL, IdleKeyboard,
-                                        GetModuleHandle(nullptr), 0);
-  idle_mouse_hook = SetWindowsHookEx(WH_MOUSE_LL, IdleMouse,
-                                     GetModuleHandle(nullptr), 0);
+  // 裸 Shift 切换中英文的键鼠钩子已停用。
+  //
+  // 停用原因（2026-10-13）：诊断日志（1766 行）显示该手势在常见场景下根本不会
+  // 生效，而它与时长无关 —— 10 次尝试全部停在同一个判据上：
+  //
+  //   [ARM-DENY] vk=160 has_kbd=1 can_toggle=0 no_mods=1
+  //   [KEY] vk=160 down=1 ... arm_allowed=0 -> arm=1 | armed=0
+  //   [KEY] vk=160 down=0 ... sched=0
+  //   [SCHEDULE]/[TIMER]/[TOGGLE] 均为 0 次
+  //
+  // 即 CanToggleIdleMode() 返回假（它要求 m_active_session == 0，也就是「TSF 没有
+  // 可编辑会话」），于是从未待命、从未排队切换。用户实测“长按不切换、单击才切换”
+  // 的现象与此吻合：能否切换取决于当时的焦点/会话状态，而不是按键时长。
+  //
+  // 既然该功能的可用性如此有限，就不再为它常驻两个全局低层钩子 —— 省掉每次按键
+  // 的钩子开销，也避免一个全局钩子带来的一类风险。状态机（WeaselIdleShift.h）与
+  // 其 15 项回归测试保留，将来若要用可以重新接线。
+  //
+  // 若将来恢复：取消下面两行注释即可，其余逻辑（含 StopMaintenance 路径）仍在。
+  // idle_mode_handler = m_handler.get();
+  // idle_keyboard_hook = SetWindowsHookEx(WH_KEYBOARD_LL, IdleKeyboard,
+  //                                       GetModuleHandle(nullptr), 0);
+  // idle_mouse_hook = SetWindowsHookEx(WH_MOUSE_LL, IdleMouse,
+  //                                    GetModuleHandle(nullptr), 0);
+  (void)&IdleKeyboard;
+  (void)&IdleMouse;
   int ret = m_server.Run();
   if (idle_keyboard_hook) UnhookWindowsHookEx(idle_keyboard_hook);
   if (idle_mouse_hook) UnhookWindowsHookEx(idle_mouse_hook);
