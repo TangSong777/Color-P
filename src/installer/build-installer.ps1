@@ -161,12 +161,30 @@ if ($SkipCompile) {
 }
 
 Head '调用 Inno Setup 编译'
-$isccCandidates = @(
-  "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe",
-  "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
-  "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
-)
-$iscc = $isccCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+# ISCC.exe 的查找顺序：先问注册表（Inno Setup 官方安装器会写下 InstallLocation，
+# 这也是唯一能覆盖"装在自定义位置"的办法），再试 PATH，最后才是几个常见目录。
+# 早先只猜固定目录，装在别处就得手改脚本。
+function Find-Iscc {
+  foreach ($hive in @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 6_is1',
+                      'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 6_is1')) {
+    try {
+      $loc = (Get-ItemProperty -Path $hive -Name InstallLocation -ErrorAction Stop).InstallLocation
+      if ($loc) {
+        $c = Join-Path $loc 'ISCC.exe'
+        if (Test-Path $c) { return $c }
+      }
+    } catch { }
+  }
+  $onPath = Get-Command ISCC.exe -ErrorAction SilentlyContinue
+  if ($onPath) { return $onPath.Source }
+  foreach ($c in @("$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe",
+                   "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+                   "$env:ProgramFiles\Inno Setup 6\ISCC.exe")) {
+    if ($c -and (Test-Path $c)) { return $c }
+  }
+  return $null
+}
+$iscc = Find-Iscc
 if (-not $iscc) { throw "找不到 ISCC.exe。安装 Inno Setup 6：winget install JRSoftware.InnoSetup" }
 Say "ISCC = $iscc"
 

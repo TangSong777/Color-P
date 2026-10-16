@@ -25,12 +25,28 @@ $ErrorActionPreference = 'Stop'
 $Here = $PSScriptRoot
 
 # 装置里的路径是编译期 #define，用 /D 覆盖成调用方指定的位置
-$isccCandidates = @(
-  "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe",
-  "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
-  "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
-)
-$iscc = $isccCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+# ISCC.exe 查找：注册表（官方安装器写的 InstallLocation）→ PATH → 常见目录。
+function Find-Iscc {
+  foreach ($hive in @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 6_is1',
+                      'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 6_is1')) {
+    try {
+      $loc = (Get-ItemProperty -Path $hive -Name InstallLocation -ErrorAction Stop).InstallLocation
+      if ($loc) {
+        $c = Join-Path $loc 'ISCC.exe'
+        if (Test-Path $c) { return $c }
+      }
+    } catch { }
+  }
+  $onPath = Get-Command ISCC.exe -ErrorAction SilentlyContinue
+  if ($onPath) { return $onPath.Source }
+  foreach ($c in @("$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe",
+                   "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+                   "$env:ProgramFiles\Inno Setup 6\ISCC.exe")) {
+    if ($c -and (Test-Path $c)) { return $c }
+  }
+  return $null
+}
+$iscc = Find-Iscc
 if (-not $iscc) {
   Write-Error '找不到 ISCC.exe。安装 Inno Setup 6：winget install JRSoftware.InnoSetup'
   exit 2
