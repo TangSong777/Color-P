@@ -45,6 +45,7 @@ patch:
     - lua_translator@*uuid
     - table_translator@custom_phrase
     - table_translator@cn_en
+    - table_translator@custom_phrase_complete
     - table_translator@radical_lookup
     - lua_translator@*unicode
     - lua_translator@*number_translator
@@ -62,3 +63,23 @@ patch:
   # 输入码，因此脚本不会对任何输入产出时间戳。其余日期/时间/星期/ISO/中英日期
   # 触发码不受影响。
   date_translator/timestamp: ""
+
+  # 前缀补全：拆成两层，避免单字母输入被英文占满。
+  #
+  #   精确码（chatgpt）→ custom_phrase        initial_quality 99 → 稳定首位
+  #   前缀码（chat）   → custom_phrase_complete initial_quality 0.9 → 能选到但排在中文之后
+  #
+  # 为什么不能只给 custom_phrase 打开 enable_completion：补全出来的候选同样带
+  # initial_quality 99，实测单字母输入会被英文吃光——
+  #   g -> Gemini | GitHub | GitLab | Google | GPU（无一个中文）
+  #   c -> ChatGPT | Claude | Copilot | CPU | 成（「成」掉到第 5）
+  # 把补全放到权重 0.9（低于拼音的 1.2）后，中文优先，英文补全作为附加项出现。
+  custom_phrase/enable_completion: false
+  custom_phrase/initial_quality: 99
+  custom_phrase_complete:
+    dictionary: ""
+    user_dict: custom_phrase
+    db_class: stabledb
+    enable_completion: true
+    enable_sentence: false
+    initial_quality: 0.9
