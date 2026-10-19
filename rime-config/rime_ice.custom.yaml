@@ -50,3 +50,15 @@ patch:
     - lua_translator@*number_translator
     - lua_translator@*calc_translator
     - lua_translator@*force_gc
+
+  # 关闭「时间戳」触发码。
+  #
+  # date_translator 把 ts 设为时间戳的触发码，而 ts 同时是 tangsong 等词的超级
+  # 简拼，时间戳候选（quality=100）会挤到第一位，导致打 ts 第一个是十位数字。
+  #
+  # 注意不能只删这一项：脚本里写的是
+  #     M.timestamp = config:get_string(...) or 'ts'
+  # 取不到值时会回退到 'ts'，等于没关。必须显式置为空串——空串不可能是合法的
+  # 输入码，因此脚本不会对任何输入产出时间戳。其余日期/时间/星期/ISO/中英日期
+  # 触发码不受影响。
+  date_translator/timestamp: ""
