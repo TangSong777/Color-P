@@ -119,7 +119,7 @@ Obsidian	obsidian
 Notion	notion
 Listary	listary
 PixPin	pixpin
-wallpaper	wallpaper
+Wallpaper	wallpaper
 ZeroTier	zerotier
-desktop	desktop
+Desktop	desktop
 Patina	patina

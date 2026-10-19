@@ -121,7 +121,7 @@ AI/模型    ChatGPT  Gemini  DeepSeek  OpenCode  Anthropic  OpenAI  Claude  Cop
            Multisim  SolidWorks  AutoCAD  STM32CubeMX  STM32CubeIDE  Keil
            Arduino  PlatformIO  Blender  Chrome  Geek  Flash  OBS
            PowerPoint  Excel  Word  XMind  Obsidian  Notion
-工具/其他   Listary  PixPin  ZeroTier  wallpaper  desktop  Patina
+工具/其他   Listary  PixPin  ZeroTier  Wallpaper  Desktop  Patina
 ```
 
 **三条编码上的限制**（都是 Rime 输入机制决定的，不是笔误）：
