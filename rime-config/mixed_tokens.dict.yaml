@@ -1,11 +1,86 @@
 # Rime dictionary
 # encoding: utf-8
+#
+# 参与造句的字母/型号词条（白名单 + ESP32/STM32）。
+# 与 custom_phrase.txt 的英文白名单保持一致，由 gen-numeric-dict 之外的流程维护。
+#
 ---
 name: mixed_tokens
 version: "1.0"
 sort: by_weight
 ...
 
-# 含数字的型号词条：靠 alphabet 里的 0-9 参与造句
 ESP32	esp32	100000
 STM32	stm32	100000
+ChatGPT	chatgpt	1000
+Gemini	gemini	1000
+DeepSeek	deepseek	1000
+OpenCode	opencode	1000
+Anthropic	anthropic	1000
+OpenAI	openai	1000
+MicroSoft	microsoft	1000
+Google	google	1000
+PowerShell	powershell	1000
+WinScp	winscp	1000
+Windows	windows	1000
+Claude	claude	1000
+Copilot	copilot	1000
+Ubuntu	ubuntu	1000
+VSCode	vscode	1000
+Intel	intel	1000
+Vim	vim	1000
+VMware	vmware	1000
+VPN	vpn	1000
+AMD	amd	1000
+Docker	docker	1000
+Linux	linux	1000
+GitHub	github	1000
+NVIDIA	nvidia	1000
+Qwen	qwen	1000
+Kimi	kimi	1000
+Grok	grok	1000
+GitLab	gitlab	1000
+Debian	debian	1000
+Python	python	1000
+Java	java	1000
+Rust	rust	1000
+JavaScript	javascript	1000
+HDMI	hdmi	1000
+SSD	ssd	1000
+SATA	sata	1000
+CPU	cpu	1000
+GPU	gpu	1000
+RAM	ram	1000
+NVMe	nvme	1000
+Minecraft	minecraft	1000
+Undertale	undertale	1000
+CDDA	cdda	1000
+Clash	clash	1000
+MATLAB	matlab	1000
+PyCharm	pycharm	1000
+Visual Studio	visualstudio	1000
+Multisim	multisim	1000
+SolidWorks	solidworks	1000
+AutoCAD	autocad	1000
+STM32CubeMX	stmcubemx	1000
+STM32CubeIDE	stmcubeide	1000
+Keil	keil	1000
+Arduino	arduino	1000
+PlatformIO	platformio	1000
+Blender	blender	1000
+Chrome	chrome	1000
+Geek	geek	1000
+Flash	flash	1000
+OBS	obs	1000
+PowerPoint	powerpoint	1000
+Excel	excel	1000
+Word	word	1000
+XMind	xmind	1000
+Obsidian	obsidian	1000
+Notion	notion	1000
+Listary	listary	1000
+PixPin	pixpin	1000
+Wallpaper	wallpaper	1000
+ZeroTier	zerotier	1000
+Desktop	desktop	1000
+Patina	patina	1000

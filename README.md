@@ -189,6 +189,7 @@ rime-ice 默认把 `ts` 设为 Unix 时间戳的触发码，而 `ts` 同时是 `
 esp32bistm32haoyong                  →  ESP32比STM32好用
 youyijianshiqingshishuo32meiyou26da  →  有一件事情是说32没有26大
 wojuedezhebukeneng                   →  我觉得这不可能
+arduinoqishiyejiunayang              →  Arduino其实也就那样
 ```
 
 实现要同时做三件事：
@@ -197,8 +198,16 @@ wojuedezhebukeneng                   →  我觉得这不可能
 |---|---|
 | `speller/alphabet` 加入 `0-9` | 数字才能作为**拼写字符**进入 Rime 的输入串 |
 | `numeric.dict.yaml`（0–99999 全部登记为词条） | 让**任意数字**都能当作一个音节参与造句 |
-| `mixed_tokens.dict.yaml`（ESP32 / STM32） | 含数字的型号也作为音节参与造句 |
+| `mixed_tokens.dict.yaml`（72 个白名单词 + ESP32 / STM32） | 让这些词能像音节一样参与造句 |
 
+> **为什么白名单词要同时进词条库**：`custom_phrase` 里的条目只作为独立候选出现，
+> **不参与 Rime 的造句**。要让 `arduinoqishiyejiunayang` 出「Arduino其实也就那样」，
+> Arduino 必须还是一条词典词条（`mixed_tokens.dict.yaml`）。
+> 两个文件都由脚本从 `custom_phrase.txt` 派生，改白名单后重跑即可：
+>
+> ```powershell
+> pwsh -File .\src\build-support\gen-mixed-tokens.ps1
+> ```
 **关键权衡：数字的归属按"按键来源"区分**
 
 | 你的操作 | 行为 |
