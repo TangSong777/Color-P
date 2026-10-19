@@ -3,7 +3,6 @@ rem Build the standalone TSF profile probe (read-only; it never changes the
 rem active input method).  Used to verify that the bare-Shift guard can tell
 rem Weasel's keyboard profile apart from another layout.
 rem
-rem 工具链位置不再写死：由 find-toolchain 探测（环境变量覆盖优先，其次 vswhere）。
 setlocal
 rem %~dp0 ends with the trailing separator, so one level up is the source root.
 set ROOT=%~dp0..
