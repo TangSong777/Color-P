@@ -30,11 +30,13 @@ patch:
     - {accept: "Control+Shift+4", toggle: traditionalization, when: always}
     - {accept: "Control+Shift+dollar", toggle: traditionalization, when: always}
 
-  # 关闭英文输入：去掉雾凇挂在拼音方案上的两个英文翻译器
-  #   table_translator@melt_eng  -> 英文单词候选（hello / world ...）
-  #   table_translator@cn_en     -> 中英混合词汇
+  # 英文输入的分层处理（按用户要求）：
+  #   table_translator@melt_eng  -> 纯英文单词候选（hello / world ...）  已关闭
+  #   table_translator@cn_en     -> 中英混排词条（X光 / T恤 / 红Buff）   保留
+  # cn_en 的词库 en_dicts/cn_en.txt 共 1001 条，全部含中文，没有纯英文条目，
+  # 所以开着它不会让英文单词冒出来。
   # 写法与上面的 processors 一致：用完整列表覆盖，顺序与 rime_ice.schema.yaml
-  # 保持相同，只少了这两个英文项。其余翻译器（日期、农历、Unicode、计算器等）不变。
+  # 相同，只少了 melt_eng。其余翻译器（日期、农历、Unicode、计算器等）不变。
   engine/translators:
     - punct_translator
     - script_translator
@@ -42,6 +44,7 @@ patch:
     - lua_translator@*lunar
     - lua_translator@*uuid
     - table_translator@custom_phrase
+    - table_translator@cn_en
     - table_translator@radical_lookup
     - lua_translator@*unicode
     - lua_translator@*number_translator
