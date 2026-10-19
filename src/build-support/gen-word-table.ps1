@@ -33,7 +33,7 @@ $categories = [ordered]@{
                  'VMware','VPN','NVIDIA','Intel','AMD','GitHub','GitLab','VSCode',
                  'PowerShell','WinScp')
   '语言/格式' = @('Python','Java','Rust','JavaScript','HDMI','SSD','SATA','CPU','GPU','RAM','NVMe')
-  '软件/游戏' = @('Minecraft','Undertale','CDDA','Clash','MATLAB','PyCharm','Visual Studio',
+  '软件/游戏' = @('Minecraft','Undertale','CDDA','Clash','MATLAB','PyCharm','VisualStudio',
                  'Multisim','SolidWorks','AutoCAD','STM32CubeMX','STM32CubeIDE','Keil',
                  'Arduino','PlatformIO','Blender','Chrome','Geek','Flash','OBS',
                  'PowerPoint','Excel','Word','XMind','Obsidian','Notion')
@@ -193,7 +193,7 @@ Add-Line ''
 Add-Line '| 规则 | 说明 |'
 Add-Line '|---|---|'
 Add-Line '| 编码一律小写 | 打 `CPU` 得到的是大写字母造词，不是词条 |'
-Add-Line '| 含空格的词编码连写 | `Visual Studio` → `visualstudio`，`PlatformIO` → `platformio` |'
+Add-Line '| 编码与词条都不含空格 | `visualstudio`、`platformio` |'
 Add-Line '| 含数字的词编码去数字 | `STM32CubeMX` → `stmcubemx`；数字编码本身要用小键盘 |'
 Add-Line '| 主键盘数字只选词 | 1–9（0 = 第 10 个）永远是选词，不会进入编码 |'
 Add-Line '| 小键盘数字才输入数字 | `KP_0`–`KP_9` 参与拼写与造句 |'

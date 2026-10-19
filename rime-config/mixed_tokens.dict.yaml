@@ -1,9 +1,9 @@
 # Rime dictionary
 # encoding: utf-8
 #
-# 参与造句的字母/型号词条（白名单 + ESP32/STM32）。
-# 与 custom_phrase.txt 的英文白名单保持一致，由 gen-numeric-dict 之外的流程维护。
-#
+# 由 src/build-support/gen-mixed-tokens.ps1 生成，请勿手工编辑。
+# 内容：英文白名单（来自 custom_phrase.txt）+ 含数字型号。
+# 作用：让这些词能像音节一样参与 Rime 造句。
 ---
 name: mixed_tokens
 version: "1.0"
@@ -58,7 +58,7 @@ CDDA	cdda	1000
 Clash	clash	1000
 MATLAB	matlab	1000
 PyCharm	pycharm	1000
-Visual Studio	visualstudio	1000
+VisualStudio	visualstudio	1000
 Multisim	multisim	1000
 SolidWorks	solidworks	1000
 AutoCAD	autocad	1000

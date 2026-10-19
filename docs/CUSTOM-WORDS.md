@@ -2,7 +2,7 @@
 
 > 本文件由 `src/build-support/gen-word-table.ps1` 从实际词条文件生成，**请勿手工编辑**。
 >
-> 生成时间：2026-10-19 18:18
+> 生成时间：2026-10-19 18:28
 
 ## 概览
 
@@ -84,7 +84,7 @@
 | 61 | STM32CubeIDE | `stmcubeide` | 软件/游戏 | ✅ |
 | 62 | STM32CubeMX | `stmcubemx` | 软件/游戏 | ✅ |
 | 63 | Undertale | `undertale` | 软件/游戏 | ✅ |
-| 64 | Visual Studio | `visualstudio` | 软件/游戏 | ✅ |
+| 64 | VisualStudio | `visualstudio` | 软件/游戏 | ✅ |
 | 65 | Word | `word` | 软件/游戏 | ✅ |
 | 66 | XMind | `xmind` | 软件/游戏 | ✅ |
 | 67 | Desktop | `desktop` | 工具/其他 | ✅ |
@@ -146,7 +146,7 @@ pwsh -File .\src\build-support\gen-numeric-dict.ps1 -Max 999999
 | 规则 | 说明 |
 |---|---|
 | 编码一律小写 | 打 `CPU` 得到的是大写字母造词，不是词条 |
-| 含空格的词编码连写 | `Visual Studio` → `visualstudio`，`PlatformIO` → `platformio` |
+| 编码与词条都不含空格 | `visualstudio`、`platformio` |
 | 含数字的词编码去数字 | `STM32CubeMX` → `stmcubemx`；数字编码本身要用小键盘 |
 | 主键盘数字只选词 | 1–9（0 = 第 10 个）永远是选词，不会进入编码 |
 | 小键盘数字才输入数字 | `KP_0`–`KP_9` 参与拼写与造句 |

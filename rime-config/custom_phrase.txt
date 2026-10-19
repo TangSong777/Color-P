@@ -97,7 +97,7 @@ CDDA	cdda
 Clash	clash
 MATLAB	matlab
 PyCharm	pycharm
-Visual Studio	visualstudio
+VisualStudio	visualstudio
 Multisim	multisim
 SolidWorks	solidworks
 AutoCAD	autocad

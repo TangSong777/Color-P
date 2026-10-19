@@ -121,7 +121,7 @@ AI/模型    ChatGPT  Gemini  DeepSeek  OpenCode  Anthropic  OpenAI  Claude  Cop
 厂商/平台   MicroSoft  Google  Windows  Ubuntu  Linux  Debian  Docker  Vim  VMware
            VPN  NVIDIA  Intel  AMD  GitHub  GitLab  VSCode  PowerShell  WinScp
 语言/格式   Python  Java  Rust  JavaScript  HDMI  SSD  SATA  CPU  GPU  RAM  NVMe
-软件/游戏   Minecraft  Undertale  CDDA  Clash  MATLAB  PyCharm  Visual Studio
+软件/游戏   Minecraft  Undertale  CDDA  Clash  MATLAB  PyCharm  VisualStudio
            Multisim  SolidWorks  AutoCAD  STM32CubeMX  STM32CubeIDE  Keil
            Arduino  PlatformIO  Blender  Chrome  Geek  Flash  OBS
            PowerPoint  Excel  Word  XMind  Obsidian  Notion
@@ -135,7 +135,7 @@ AI/模型    ChatGPT  Gemini  DeepSeek  OpenCode  Anthropic  OpenAI  Claude  Cop
 
 | 情况 | 处理 | 原因 |
 |---|---|---|
-| 词里带空格（`Visual Studio`、`PlatformIO`） | 编码连写：`visualstudio`、`platformio` | 空格是上屏键，不能出现在编码里 |
+| 编码一律不含空格（`visualstudio`、`platformio`） | 词条显示文本也不带空格 | 空格是上屏键，不能出现在编码或词条里 |
 | 词里带数字（`STM32CubeMX`） | 编码去掉数字：`stmcubemx`、`stmcubeide` | 主键盘数字是**选词键**，不能作为拼写字符输入 |
 | 只想打词尾（`cubemx`） | 打不出来 | 补全只匹配**前缀**，`stm` 可以，`cubemx` 不行 |
 
@@ -422,7 +422,8 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 
 | 版本 | 说明 | 对应标签 |
 |---|---|---|
-| **0.1.0** | **当前版**：拼音 + 数字/型号混合造句、英文白名单 72 词、大字表 41448、时间戳触发码禁用、退格三档 | `0.1.0` |
+| **0.1.1** | **当前版**：去掉词条显示文本里的空格（`VisualStudio`、`PlatformIO`） | `0.1.1` |
+| 0.1.0 | 首个「拼音 + 数字/型号混合造句」正式包：白名单 72 词、大字表 41448、时间戳触发码禁用、退格三档 | `0.1.0` |
 | 0.0.6 | 纯净版：移除全部键鼠钩子，仓库自包含 | `0.0.6` |
 | 0.0.5 | 历史版本 | `0.0.5` |
 | 0.0.4 | 历史版本 | `0.0.4` |
@@ -437,14 +438,15 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 
 ```powershell
 # 1. 改版本号（两处，必须一致）
-#    src\installer\Color-P.iss   -> MyAppVersion / MyAppVersionQuad
+#    src\installer\Color-P.iss        -> MyAppVersion / MyAppVersionQuad
 #    src\installer\build-installer.ps1 -> $PackageVersion
-# 2. 打包
+# 2. 打包（产物名由 $PackageVersion 决定）
 pwsh -File .\src\installer\build-installer.ps1
-# 3. 打标签并发布
-git tag 0.1.0 && git push origin 0.1.0
-gh release create 0.1.0 .\src\installer\output\Color-P-Setup-0.1.0.exe `
-    --title "Color-P 0.1.0" --notes-file RELEASE-NOTES.md --latest
+# 3. 打标签并发布（把 <版本> 换成实际值，例如 0.1.1）
+git tag <版本> && git push origin <版本>
+gh release create <版本> .\src\installer\output\Color-P-Setup-<版本>.exe `
+    .\src\installer\output\SHA256SUMS.txt `
+    --title "Color-P <版本>" --notes-file RELEASE-NOTES.md --latest
 ```
 
 安装包文件名固定为 `Color-P-Setup-<版本>.exe`，并附带 `SHA256SUMS.txt`。
@@ -456,7 +458,7 @@ gh release create 0.1.0 .\src\installer\output\Color-P-Setup-0.1.0.exe `
 ### 方式一：直接安装（推荐，不需要编译）
 
 从 [Releases](https://github.com/TangSong777/Color-P/releases/latest) 下载
-`Color-P-Setup-0.1.0.exe`（约 27 MB，**内置全部素材，安装时不需要联网**），
+`Color-P-Setup-0.1.1.exe`（约 27 MB，**内置全部素材，安装时不需要联网**），
 **右键以管理员身份运行**，按向导下一步即可。
 
 > **版本号**：`0.1.0` 是 Color-P 自己的版本，与上游小狼毫 `0.17.4` 解耦。
@@ -477,7 +479,7 @@ gh release create 0.1.0 .\src\installer\output\Color-P-Setup-0.1.0.exe `
 **静默安装**（适合脚本化或重装）：
 
 ```powershell
-Color-P-Setup-0.1.0.exe /SILENT /NORESTART /SUPPRESSMSGBOXES
+Color-P-Setup-0.1.1.exe /SILENT /NORESTART /SUPPRESSMSGBOXES
 ```
 
 安装向导需要管理员权限（`PrivilegesRequired=admin`），所以静默安装同样要在**已提权的

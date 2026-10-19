@@ -18,10 +18,11 @@
 #define MyAppName "Color-P 小狼毫定制版"
 ; Color-P 自身的版本号，与上游小狼毫版本解耦。
 ; 0.1.0 = 首个包含「拼音 + 数字/型号混合造句」的正式包。
+; 0.1.1 = 去掉词条显示文本里的空格（PATCH）。
 ; 历史包：0.0.1 … 0.0.6（原 v0.17.4-colorp、v0.17.4-colorp.2 … .6）。
-#define MyAppVersion "0.1.0"
+#define MyAppVersion "0.1.1"
 ; Windows 文件属性里显示的四段式版本
-#define MyAppVersionQuad "0.1.0.0"
+#define MyAppVersionQuad "0.1.1.0"
 #define MyAppPublisher "TangSong777"
 #define MyAppURL "https://github.com/TangSong777/Color-P"
 ; 上游小狼毫版本：只决定安装目录与内嵌的官方安装器，不随 Color-P 版本变化
