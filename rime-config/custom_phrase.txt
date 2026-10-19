@@ -17,7 +17,8 @@
 # 但不与其他翻译器互相造词，如果使用了完整编码，那么这个字或词将无法参与造词，即自造词无法被记住。
 # 所以只建议固定非完整拼音的编码，如果需求是置顶指定拼音的候选项，请参考方案中的 pin_cand_filter。
 #
-# 最下面的英文是因为一些常用单词的第一候选项被纠错覆盖了，如 Amazon 被纠错为「a ma zong 阿妈粽」，期望的 Amazon 跑到第二个候选项了，所以这里给它固定死喽。
+# 上游在此固定了 14 条纯英文（go/Amazon/code…），用于修正纠错误判。
+# Color-P 定制已按要求移除这些条目：本方案不提供任何纯英文候选。
 #
 # version: "2024-03-12"
 #
@@ -48,17 +49,3 @@
 又又又	uuu
 又双叒叕	uuuu
 
-go	go
-Golang	golang
-Hugo	hugo
-goto	goto
-domain	domain
-TODO	todo
-Dota	dota
-main	main
-Amazon	amazon
-NASA	nasa
-gone	gone
-Go程	gocheng
-code	code
-SOHO	soho
