@@ -19,6 +19,7 @@
   - [6. 关闭时间戳触发码](#6-关闭时间戳触发码)
   - [7. 候选窗稳定性修补](#7-候选窗稳定性修补)
   - [8. 拼音 + 数字 + 型号：混合造句](#8-拼音--数字--型号混合造句)
+  - [自定义字词总表](docs/CUSTOM-WORDS.md)（全部词条一览）
 - [高度定制（上游已有，本项目大改）](#高度定制上游已有本项目大改)
 - [关于 Shift 切换中英文](#关于-shift-切换中英文)
 - [目录结构](#目录结构)
@@ -124,6 +125,9 @@ AI/模型    ChatGPT  Gemini  DeepSeek  OpenCode  Anthropic  OpenAI  Claude  Cop
            PowerPoint  Excel  Word  XMind  Obsidian  Notion
 工具/其他   Listary  PixPin  ZeroTier  Wallpaper  Desktop  Patina
 ```
+
+完整清单（含编码、分类、是否参与造句、中文短码、数字范围）见 **[自定义字词总表](docs/CUSTOM-WORDS.md)**。
+该表由 `gen-word-table.ps1` 从实际词条文件生成，不会与配置脱节。
 
 **三条编码上的限制**（都是 Rime 输入机制决定的，不是笔误）：
 
@@ -372,7 +376,7 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 │   ├── mixed_tokens.dict.yaml # ★ 含数字型号（ESP32 / STM32）
 │   ├── rime_ice.dict.yaml   #   ★ 词库挂载表（含大字表与上述两个词条）
 │   └── lua/keypad_input.lua #   ★ 小键盘混合输入处理器
-├── docs/                    # 全部文档
+├── docs/                    # 全部文档（★ CUSTOM-WORDS.md = 自定义字词总表）
 ├── reference/               # 参考资料（第三方快照，非本项目代码）
 ├── weasel-0.17.4/           # 已安装的小狼毫本体（第三方二进制，**不入库**）
 └── README.md
