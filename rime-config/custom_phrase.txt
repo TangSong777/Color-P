@@ -117,3 +117,9 @@ Word	word
 XMind	xmind
 Obsidian	obsidian
 Notion	notion
+Listary	listary
+PixPin	pixpin
+wallpaper	wallpaper
+ZeroTier	zerotier
+desktop	desktop
+Patina	patina

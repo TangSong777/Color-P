@@ -109,7 +109,7 @@
 | 中英混排词 | `table_translator@cn_en` | **保留**。词库 1001 条全部含中文（`X光`、`T恤`、`红Buff`、`AD钙奶`），无一条纯英文 |
 | 指定英文名词 | `custom_phrase` + `custom_phrase_complete` | 40 个白名单词，支持前缀补全 |
 
-白名单（66 个，按规范大小写写入、用小写编码输入）：
+白名单（72 个，按规范大小写写入、用小写编码输入）：
 
 ```
 AI/模型    ChatGPT  Gemini  DeepSeek  OpenCode  Anthropic  OpenAI  Claude  Copilot
@@ -121,6 +121,7 @@ AI/模型    ChatGPT  Gemini  DeepSeek  OpenCode  Anthropic  OpenAI  Claude  Cop
            Multisim  SolidWorks  AutoCAD  STM32CubeMX  STM32CubeIDE  Keil
            Arduino  PlatformIO  Blender  Chrome  Geek  Flash  OBS
            PowerPoint  Excel  Word  XMind  Obsidian  Notion
+工具/其他   Listary  PixPin  ZeroTier  wallpaper  desktop  Patina
 ```
 
 **三条编码上的限制**（都是 Rime 输入机制决定的，不是笔误）：
@@ -315,7 +316,7 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 │   ├── weasel.custom.yaml   #   ☆ 启用 SSF 后端、配色、布局
 │   ├── default.custom.yaml  #   ☆ 方案列表与快捷键
 │   ├── rime_ice.custom.yaml #   ★ 处理器/翻译器覆盖、按键绑定、英文分层、时间戳禁用
-│   ├── custom_phrase.txt    #   ★ 66 个英文白名单 + 21 条中文短码
+│   ├── custom_phrase.txt    #   ★ 72 个英文白名单 + 21 条中文短码
 │   └── lua/keypad_input.lua #   ★ 小键盘混合输入处理器
 ├── docs/                    # 全部文档
 ├── reference/               # 参考资料（第三方快照，非本项目代码）
@@ -543,7 +544,7 @@ pwsh -File .\src\installer\build-installer.ps1
 | 中文模式下主键盘 `.` 输出 `。` | 标点形态完全由中英模式决定；打小数点用 `KP_Decimal`（ASCII `.`），所以 `192.168.1.1` 在中文模式变成 `192。168。1。1` |
 | 裸 Shift 切中英只在**输入框内**且**短按（500 ms 内）**生效 | 小狼毫引擎本体既有的 `ascii_composer` 行为，本项目未改（详见 [上文](#关于-shift-切换中英文)） |
 | **输入框外无法切中英** | 没有 TSF 会话，按键不进 Rime 引擎。早期用全局钩子补过这条路，实测从未生效，已移除 |
-| **只有白名单里的 66 个英文词能出英文** | 有意设计：其余英文（`hello`/`world`/`go`/`code`…）不出候选，见 [第 4 节](#4-英文输入白名单--分层前缀补全) |
+| **只有白名单里的 72 个英文词能出英文** | 有意设计：其余英文（`hello`/`world`/`go`/`code`…）不出候选，见 [第 4 节](#4-英文输入白名单--分层前缀补全) |
 | 英文词条**必须小写输入** | 大写走「大写字母造词」通道（`zuogeDNAjiance` → 做个DNA检测） |
 | 以词定字（`[` `]`）不可用 | `engine/processors` 被本项目完整覆盖且未保留 `select_character`，`[` `]` 归标点 |
 | **计算器 `cC` 里 `+` 无效** | `cC2+2` 无结果，但 `cC2*3`、`cC9/3`、`cC1-1` 正常。原因是本项目的 `keypad_input.lua` 把 `+` 当字面量拦截。**既有问题，未修** |
