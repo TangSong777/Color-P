@@ -23,10 +23,12 @@
 - [高度定制（上游已有，本项目大改）](#高度定制上游已有本项目大改)
 - [关于 Shift 切换中英文](#关于-shift-切换中英文)
 - [目录结构](#目录结构)
+- [版本与发布](#版本与发布)
 - [安装与使用](#安装与使用)
 - [日常操作](#日常操作)
 - [测试](#测试)
 - [从源码恢复与构建](#从源码恢复与构建)
+- [扩展指南](#扩展指南)
 - [已知取舍](#已知取舍)
 - [致谢与声明](#致谢与声明)
 
@@ -394,13 +396,67 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 
 ---
 
+## 版本与发布
+
+**Color-P 的版本号与上游小狼毫版本解耦。** 上游 `0.17.4` 只决定安装目录
+（`weasel-0.17.4`）与内嵌的官方安装器，不随本项目的发布变化。
+
+### 版本号规则
+
+采用 `MAJOR.MINOR.PATCH`：
+
+| 位 | 变化条件 |
+|---|---|
+| `MAJOR` | 不兼容的大改（如更换引擎、安装布局变更） |
+| `MINOR` | 新增可感知的能力（新输入特性、新配置项） |
+| `PATCH` | 修 bug、调参数、更新词库，不改变使用方式 |
+
+当前阶段停留在 `0.x`，`1.0.0` 留给「功能与兼容性都稳定」之后。
+
+### 当前与历史版本
+
+| 版本 | 说明 | 对应标签 |
+|---|---|---|
+| **0.1.0** | **当前版**：拼音 + 数字/型号混合造句、英文白名单 72 词、大字表 41448、时间戳触发码禁用、退格三档 | `0.1.0` |
+| 0.0.6 | 纯净版：移除全部键鼠钩子，仓库自包含 | `0.0.6` |
+| 0.0.5 | 历史版本 | `0.0.5` |
+| 0.0.4 | 历史版本 | `0.0.4` |
+| 0.0.3 | 历史版本 | `0.0.3` |
+| 0.0.2 | 历史版本 | `0.0.2` |
+| 0.0.1 | 初版 | `0.0.1` |
+
+> 旧标签 `v0.17.4-colorp`、`v0.17.4-colorp.2` … `.6` 已按上表重命名为
+> `0.0.1` … `0.0.6`；「第 n 次修补」的说法不再使用。
+
+### 发布流程
+
+```powershell
+# 1. 改版本号（两处，必须一致）
+#    src\installer\Color-P.iss   -> MyAppVersion / MyAppVersionQuad
+#    src\installer\build-installer.ps1 -> $PackageVersion
+# 2. 打包
+pwsh -File .\src\installer\build-installer.ps1
+# 3. 打标签并发布
+git tag 0.1.0 && git push origin 0.1.0
+gh release create 0.1.0 .\src\installer\output\Color-P-Setup-0.1.0.exe `
+    --title "Color-P 0.1.0" --notes-file RELEASE-NOTES.md --latest
+```
+
+安装包文件名固定为 `Color-P-Setup-<版本>.exe`，并附带 `SHA256SUMS.txt`。
+
+---
+
 ## 安装与使用
 
 ### 方式一：直接安装（推荐，不需要编译）
 
-从 [Releases](https://github.com/TangSong777/Color-P/releases) 下载
-`Color-P-Setup-0.17.4.exe`（约 27 MB，**内置全部素材，安装时不需要联网**），
+从 [Releases](https://github.com/TangSong777/Color-P/releases/latest) 下载
+`Color-P-Setup-0.1.0.exe`（约 27 MB，**内置全部素材，安装时不需要联网**），
 **右键以管理员身份运行**，按向导下一步即可。
+
+> **版本号**：`0.1.0` 是 Color-P 自己的版本，与上游小狼毫 `0.17.4` 解耦。
+> 历史版本为 `0.0.1` … `0.0.6`（原先的「修订 n」已全部改为版本号）。
+> 详见 [版本与发布](#版本与发布)。
 
 安装器会一次做完这些事：
 
@@ -416,7 +472,7 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 **静默安装**（适合脚本化或重装）：
 
 ```powershell
-Color-P-Setup-0.17.4.exe /SILENT /NORESTART /SUPPRESSMSGBOXES
+Color-P-Setup-0.1.0.exe /SILENT /NORESTART /SUPPRESSMSGBOXES
 ```
 
 安装向导需要管理员权限（`PrivilegesRequired=admin`），所以静默安装同样要在**已提权的
@@ -589,6 +645,78 @@ pwsh -File .\src\installer\build-installer.ps1
 
 产物在 `src\installer\output\`。脚本会校验打包数据里**不含个人数据**
 （`userdb`、`sync/`、`installation.yaml`、`user.yaml` 一律排除）。
+
+---
+
+## 扩展指南
+
+所有扩展点都在**配置与数据**里，改这些不需要动 C++ 代码。
+
+### 加词
+
+| 想要 | 改哪里 | 之后做什么 |
+|---|---|---|
+| 英文词 / 中文短码 | `rime-config/custom_phrase.txt`，格式 `词条<Tab>编码` | 重新部署 |
+| 让英文词能嵌入句子 | 在 `mixed_tokens.dict.yaml` 加同一行（`词条<Tab>编码<Tab>1000`） | 重新部署 |
+| 扩大数字范围 | `pwsh -File .\src\build-support\gen-numeric-dict.ps1 -Max 999999` | 重新部署 |
+| 更新词表文档 | `pwsh -File .\src\build-support\gen-word-table.ps1` | 提交 `docs/CUSTOM-WORDS.md` |
+
+> 白名单与 `mixed_tokens` 是**两份数据、同一来源**：后者由 `gen-mixed-tokens.ps1`
+> 从前者派生。只改前者，`custom_phrase` 能出词但**不能造句**。
+
+### 加词库 / 字表
+
+编辑 `rime_ice.dict.yaml` 的 `import_tables`，把新表放在合适位置（越靠前权重越高）：
+
+```yaml
+import_tables:
+  - mixed_tokens        # 参与造句的英文/型号
+  - numeric             # 0-99999 数字
+  - cn_dicts/8105       # 字表
+  - cn_dicts/41448      # 大字表
+  - cn_dicts/base       # 基础词库
+```
+
+大字表 `41448` 就是这样启用的（见 [高度定制 §3](#3-词库启用范围)）。
+
+### 加处理器 / 翻译器
+
+1. Lua 脚本放到 `rime-config/lua/`
+2. 在 `rime_ice.custom.yaml` 的 `engine/processors` 或 `engine/translators` 里挂载：
+   ```yaml
+   - lua_processor@*my_processor
+   - lua_translator@*my_translator
+   ```
+3. **处理器顺序即优先级** —— 要拦某个键，必须排在内置 `speller`/`selector` 之前。
+
+`keypad_input.lua` 是最完整的示例（拦主键盘数字、放行小键盘数字、维护虚拟尾巴）。
+
+### 换皮肤
+
+| 内容 | 位置 |
+|---|---|
+| 原始素材（skin.ini + 图片） | `assets/Color-P/` |
+| 启用与参数 | `rime-config/weasel.custom.yaml` 的 `style/ssf_skin`、`ssf_enabled` |
+| 已部署副本 | `C:\ProgramData\ColorPWeasel\Color-P` |
+
+改素材后重新部署即可生效，无需重编译。
+
+### 验证入口
+
+| 命令 | 作用 |
+|---|---|
+| `python src\test\TestSsfSkin\test_keypad.py <lua>` | 小键盘/数字混合的 Lua 行为（94 项） |
+| `src\dist\ssf_tests.exe` | SSF 皮肤解析与绘制（237 项） |
+| `src\dist\dict-probe.exe <用户目录> <共享目录> --query <编码>` | 某编码实际出什么候选 |
+| `src\dist\dict-probe.exe <用户目录> <共享目录>` | 生僻字覆盖度（6 项） |
+| `src\dist\host-regression.exe` | 宿主事件序列、多屏、焦点切换 |
+
+### 保持可复现的三条约定
+
+1. **脚本不写死机器路径** —— 位置一律从注册表/常见目录探测，或由参数传入。
+2. **版本号两处同步** —— `Color-P.iss` 的 `MyAppVersion` 与 `build-installer.ps1` 的 `$PackageVersion`。
+3. **发布前重跑生成脚本** —— `gen-numeric-dict`（如需）、`gen-mixed-tokens`、`gen-word-table`，
+   让文档与数据始终一致。
 
 ---
 

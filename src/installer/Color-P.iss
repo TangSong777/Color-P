@@ -16,9 +16,15 @@
 ; ============================================================================
 
 #define MyAppName "Color-P 小狼毫定制版"
-#define MyAppVersion "0.17.4"
+; Color-P 自身的版本号，与上游小狼毫版本解耦。
+; 0.1.0 = 首个包含「拼音 + 数字/型号混合造句」的正式包。
+; 历史包：0.0.1 … 0.0.6（原 v0.17.4-colorp、v0.17.4-colorp.2 … .6）。
+#define MyAppVersion "0.1.0"
+; Windows 文件属性里显示的四段式版本
+#define MyAppVersionQuad "0.1.0.0"
 #define MyAppPublisher "TangSong777"
 #define MyAppURL "https://github.com/TangSong777/Color-P"
+; 上游小狼毫版本：只决定安装目录与内嵌的官方安装器，不随 Color-P 版本变化
 #define UpstreamVersion "0.17.4"
 #define SkinDirName "ColorPWeasel"
 
@@ -26,7 +32,8 @@
 AppId={{8F3A7C21-4D6B-4E59-9A2F-7C1B5E8D3A04}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-AppVerName={#MyAppName} {#MyAppVersion}
+AppVerName={#MyAppName} {#MyAppVersion}（小狼毫 {#UpstreamVersion}）
+VersionInfoVersion={#MyAppVersionQuad}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}

@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
   暂存安装器载荷并编译出单文件安装器。
 
@@ -38,6 +38,8 @@ $Root        = $PSScriptRoot
 $SrcRoot     = Split-Path $Root -Parent          # ..\src
 $Payload     = Join-Path $Root 'payload'
 $UpstreamVer = '0.17.4'
+# Color-P 自身的版本号：与上游小狼毫版本解耦（上游版本只决定安装目录与内嵌官方安装器）。
+$PackageVersion = '0.1.0'
 
 function Say([string]$m) { Write-Host "  $m" }
 function Head([string]$m) { Write-Host "`n=== $m ===" -ForegroundColor Cyan }
@@ -222,7 +224,7 @@ Say "ISCC = $iscc"
 & $iscc (Join-Path $Root 'Color-P.iss')
 if ($LASTEXITCODE -ne 0) { throw "Inno Setup 编译失败（exit $LASTEXITCODE）" }
 
-$out = Join-Path $Root "output\Color-P-Setup-$UpstreamVer.exe"
+$out = Join-Path $Root "output\Color-P-Setup-$PackageVersion.exe"
 if (Test-Path $out) {
   $h = (Get-FileHash $out -Algorithm SHA256).Hash
   Head '完成'
