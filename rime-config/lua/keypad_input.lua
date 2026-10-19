@@ -310,7 +310,7 @@ function keypad_input.init(env)
     env.raw_buffer = env.raw_buffer .. leading
     raw = raw:sub(#leading + 1)
     position = position - #leading
-    local active = raw:match("^([A-Za-z']*)") or ""
+    local active = raw:match("^([A-Za-z'0-9]*)") or ""
     env.tail = raw:sub(#active + 1)
     env.replace_active_input(active)
     if active == "" then
@@ -371,6 +371,35 @@ function keypad_input.func(key, env)
   if not key:release() then env.shift_armed = false end
   if key:release() then return 2 end
   if context.get_option and context:get_option("ascii_mode") then return 2 end
+  -- 主键盘数字：只用于选词，绝不作为输入字符。
+  --
+  -- 数字已加入 speller/alphabet（供小键盘输入数字），若不在最前面拦下来，主键盘
+  -- 数字会被 speller 当成拼写字符吃掉，1-9 选词就失效了。
+  local main_digit = key_repr:match("^(%d)$")
+  if main_digit then
+    local index = tonumber(main_digit) - 1
+    if index < 0 then index = 9 end              -- 0 表示第 10 个
+    if context:has_menu() then
+      -- 有虚拟尾巴时，候选要先并入 buffer（数字在输入串之外，原生选择拿不到）。
+      if env.tail ~= "" or env.buffer ~= "" or env.literal_only then
+        local segment = context.composition:back()
+        local page_size = env.engine.schema.config:get_int("menu/page_size") or 5
+        page_size = math.max(1, page_size)
+        local page_start = math.floor(segment.selected_index / page_size) * page_size
+        local candidate = index < page_size and segment:get_candidate_at(page_start + index)
+        if candidate and env.accept_current_candidate(candidate) then
+          return 1
+        end
+        return 1
+      end
+      -- 普通拼音组合：数字已在 alphabet 里，Rime 的 selector 收不到，
+      -- 必须在这里代为执行原生选择（否则按 1-9 只会吞键）。
+      context:select(index)
+      return 1
+    end
+    if context:is_composing() then return 1 end   -- 组合中无候选：吞掉，绝不进拼写
+    return 2
+  end
   -- 没有候选框（没输入过字母）时，小键盘字符和标点都直接上屏。
   -- 有候选框时走下面的混合输入分支，塞进候选框。
   if not context:is_composing() then
@@ -563,6 +592,13 @@ function keypad_input.func(key, env)
   local after = input:sub(caret + 1)
   if before == "" then
     env.edit_raw(keypad_value .. after, #keypad_value)
+    return 1
+  end
+
+  -- 数字进入真实输入，参与拼写与造句（ESP32、任意数字都能被 Rime 当音节）。
+  -- 其它小键盘运算符（+ - * / .）仍走虚拟尾巴，避免破坏标点与混合提交。
+  if keypad_value:match("^%d$") then
+    env.edit_raw(before .. keypad_value .. after, caret + #keypad_value)
     return 1
   end
 

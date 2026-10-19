@@ -18,6 +18,7 @@
   - [5. 退格三档语义](#5-退格三档语义)
   - [6. 关闭时间戳触发码](#6-关闭时间戳触发码)
   - [7. 候选窗稳定性修补](#7-候选窗稳定性修补)
+  - [8. 拼音 + 数字 + 型号：混合造句](#8-拼音--数字--型号混合造句)
 - [高度定制（上游已有，本项目大改）](#高度定制上游已有本项目大改)
 - [关于 Shift 切换中英文](#关于-shift-切换中英文)
 - [目录结构](#目录结构)
@@ -179,8 +180,49 @@ rime-ice 默认把 `ts` 设为 Unix 时间戳的触发码，而 `ts` 同时是 `
 | **标点形态完全由中英模式决定** | 中文模式一律中文标点（`,`→`，`、`.`→`。`，数字后面也不例外），英文模式交给宿主。**打小数点用小键盘的 `KP_Decimal`**，它输出 ASCII `.`，所以 `4.5` 正常 |
 | **光标移开即清理组合** | 光标移开时若宿主只收走组合窗口，会留下「Rime 仍 composing、TSF 已无组合」的中间态：回到输入框时先前的字母还在却选不动，再打字又从零开始。现在隐藏 UI 即终止会话，并在按键前校验会话不变量 |
 
----
+### 8. 拼音 + 数字 + 型号：混合造句
 
+这是本项目最"反直觉"的一处设计：**输入串里可以同时出现拼音和数字**，由 Rime 自己的
+语言模型拼成一句，而不是各段分别上屏。
+
+```
+esp32bistm32haoyong                  →  ESP32比STM32好用
+youyijianshiqingshishuo32meiyou26da  →  有一件事情是说32没有26大
+wojuedezhebukeneng                   →  我觉得这不可能
+```
+
+实现要同时做三件事：
+
+| 组成 | 作用 |
+|---|---|
+| `speller/alphabet` 加入 `0-9` | 数字才能作为**拼写字符**进入 Rime 的输入串 |
+| `numeric.dict.yaml`（0–99999 全部登记为词条） | 让**任意数字**都能当作一个音节参与造句 |
+| `mixed_tokens.dict.yaml`（ESP32 / STM32） | 含数字的型号也作为音节参与造句 |
+
+**关键权衡：数字的归属按"按键来源"区分**
+
+| 你的操作 | 行为 |
+|---|---|
+| **小键盘**数字 `KP_0`–`KP_9` | 作为拼写字符输入，参与造句 |
+| **主键盘**数字 `1`–`9`（`0` 表示第 10 个） | **只用于选词**，绝不进入输入串 |
+
+为什么必须这样区分：数字一旦进 `alphabet`，主键盘数字就会被 `speller` 当成拼写字符吃掉，
+1-9 选词随之失效。所以 `keypad_input.lua` 在按键入口就拦下主键盘数字 —— 普通拼音组合下
+代为调用 `context:select(index)`（原生 selector 已经收不到数字），虚拟尾巴模式下走原有的
+buffer 合并路径。
+
+小键盘运算符（`+ - * /`）与普通标点**仍走虚拟尾巴**，因此「拼音 + 符号」的原有行为不变。
+
+`numeric.dict.yaml` 可用脚本重新生成（改范围或换机器时）：
+
+```powershell
+pwsh -File .\src\build-support\gen-numeric-dict.ps1 -Max 99999 -Out $env:APPDATA\Rime\numeric.dict.yaml
+```
+
+打开这两个词条文件后，`rime_ice.dict.yaml` 的 `import_tables` 需要把它们放在最前
+（权重最高），仓库里的 `rime-config/rime_ice.dict.yaml` 已按此写法提供。
+
+---
 ## 高度定制（上游已有，本项目大改）
 
 这一层与上一层的区别是：**上游本来就有的东西**，但本项目改了它。
@@ -317,6 +359,9 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 │   ├── default.custom.yaml  #   ☆ 方案列表与快捷键
 │   ├── rime_ice.custom.yaml #   ★ 处理器/翻译器覆盖、按键绑定、英文分层、时间戳禁用
 │   ├── custom_phrase.txt    #   ★ 72 个英文白名单 + 21 条中文短码
+│   ├── numeric.dict.yaml    #   ★ 0-99999 数字词条（任意数字参与造句）
+│   ├── mixed_tokens.dict.yaml # ★ 含数字型号（ESP32 / STM32）
+│   ├── rime_ice.dict.yaml   #   ★ 词库挂载表（含大字表与上述两个词条）
 │   └── lua/keypad_input.lua #   ★ 小键盘混合输入处理器
 ├── docs/                    # 全部文档
 ├── reference/               # 参考资料（第三方快照，非本项目代码）
@@ -410,7 +455,9 @@ Color-P-Setup-0.17.4.exe /SILENT /NORESTART /SUPPRESSMSGBOXES
 | `BackSpace` | 删一个字符 |
 | **`Shift+BackSpace`** | **删一整个拼音音节** |
 | **`Ctrl+BackSpace`** | **清空整个候选框的输入**，连同候选窗与 Rime 会话一起清理；没有组合时交还宿主（普通文本框里仍是“删前一个词”） |
-| 小键盘数字/运算符 | 按原义输入，可参与混合分段选词 |
+| **小键盘**数字 `KP_0`–`KP_9` | 输入数字，参与拼写与造句（`woshi`+KP4 → 我是4） |
+| **主键盘**数字 `1`–`9`（`0`=第 10 个） | **仅选词**，绝不进入输入串 |
+| 小键盘运算符 `+ - * /` | 按原义进入虚拟尾巴，可参与混合提交 |
 | 英文白名单词（小写） | 如 `chatgpt`、`cpu`、`vscode`；支持前缀 `chat` → ChatGPT |
 | 语言栏左键 | 无动作（仅状态指示）；右键打开菜单 |
 
@@ -424,7 +471,7 @@ Color-P-Setup-0.17.4.exe /SILENT /NORESTART /SUPPRESSMSGBOXES
 # SSF 皮肤解析与布局（237 项）
 pwsh -NoProfile -File .\src\build-ssf-tests.ps1 -Run
 
-# 小键盘混合输入 Lua 处理器（636 项，需要 Python + lupa）
+# 小键盘/数字混合输入 Lua 处理器（90 项，需要 Python + lupa）
 python .\src\test\TestSsfSkin\test_keypad.py .\rime-config\lua\keypad_input.lua
 
 # 候选窗生命周期与输入法切换回归（11 项断言）

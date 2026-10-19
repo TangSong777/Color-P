@@ -1,0 +1,11 @@
+# Rime dictionary
+# encoding: utf-8
+---
+name: mixed_tokens
+version: "1.0"
+sort: by_weight
+...
+
+# 含数字的型号词条：靠 alphabet 里的 0-9 参与造句
+ESP32	esp32	100000
+STM32	stm32	100000

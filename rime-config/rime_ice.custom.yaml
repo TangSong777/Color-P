@@ -83,3 +83,14 @@ patch:
     enable_completion: true
     enable_sentence: false
     initial_quality: 0.9
+
+  # 让 0-9 成为合法拼写字符，支持「拼音 + 数字/型号」混合造句，例如
+  #   youyijianshiqingshishuo32meiyou26da -> 有一件事情是说32没有26大
+  #   esp32bistm32haoyong                 -> ESP32比STM32好用
+  #
+  # 数字词条来自 numeric.dict.yaml（0..99999）与 mixed_tokens.dict.yaml（ESP32/STM32），
+  # 都在 rime_ice.dict.yaml 的 import_tables 里。
+  #
+  # 数字进入 alphabet 后，主键盘数字本会被 speller 吃掉，所以 keypad_input.lua 里
+  # 加了拦截：主键盘数字只用于选词，永不进入输入串；只有小键盘数字才作为拼写输入。
+  speller/alphabet: "zyxwvutsrqponmlkjihgfedcbaZYXWVUTSRQPONMLKJIHGFEDCBA`0123456789"

@@ -143,6 +143,12 @@ int main(int argc, char** argv) {
       api->candidate_list_end(&it);
     }
     if (n == 0) std::printf("  (no candidates)\n");
+    // 打印是否发生了上屏（验证 1-9 选词在数字进入 alphabet 后仍然有效）
+    RIME_STRUCT(RimeCommit, commit);
+    if (api->get_commit && api->get_commit(sid, &commit) && commit.text) {
+      std::printf("  commit: \"%s\"\n", commit.text);
+      if (api->free_commit) api->free_commit(&commit);
+    }
     api->destroy_session(sid);
     api->finalize();
     std::printf("\nquery total: %d\n", n);
