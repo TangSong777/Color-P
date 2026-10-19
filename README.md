@@ -403,9 +403,9 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 （`weasel-0.17.4`）与内嵌的官方安装器，不随本项目的发布变化。
 
 > **版本号只在维护者明确指令后更新。** 日常改动（加词、修 bug、改文档、调参数）
-> 只提交到 `master`，不会自动升版本、打标签或重建发布包。
-> 收到更新指令时，先按 [CHANGELOG.md](CHANGELOG.md) 的模板写完整发布日志，
-> 再改版本号、打包、发版。
+> **只改本地文件并部署验证，不提交、不推送、不升版本、不打标签、不重建发布包**。
+> 项目始终保持一个稳定版本；改动先累积，等指令再统一提交、写发布日志、打包发版。
+> 完整流程见 [CHANGELOG.md](CHANGELOG.md)。
 
 ### 版本号规则
 
@@ -427,8 +427,7 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 
 | 版本 | 说明 | 对应标签 |
 |---|---|---|
-| **0.1.1** | **当前版**：去掉词条显示文本里的空格（`VisualStudio`、`PlatformIO`） | `0.1.1` |
-| 0.1.0 | 首个「拼音 + 数字/型号混合造句」正式包：白名单 72 词、大字表 41448、时间戳触发码禁用、退格三档 | `0.1.0` |
+| **0.1.0** | **当前稳定版**：拼音 + 数字/型号混合造句、英文白名单 72 词（显示文本不含空格）、大字表 41448、时间戳触发码禁用、退格三档 | `0.1.0` |
 | 0.0.6 | 纯净版：移除全部键鼠钩子，仓库自包含 | `0.0.6` |
 | 0.0.5 | 历史版本 | `0.0.5` |
 | 0.0.4 | 历史版本 | `0.0.4` |
@@ -447,7 +446,7 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 #    src\installer\build-installer.ps1 -> $PackageVersion
 # 2. 打包（产物名由 $PackageVersion 决定）
 pwsh -File .\src\installer\build-installer.ps1
-# 3. 打标签并发布（把 <版本> 换成实际值，例如 0.1.1）
+# 3. 打标签并发布（把 <版本> 换成实际值，例如 0.1.0）
 git tag <版本> && git push origin <版本>
 gh release create <版本> .\src\installer\output\Color-P-Setup-<版本>.exe `
     .\src\installer\output\SHA256SUMS.txt `
@@ -463,7 +462,7 @@ gh release create <版本> .\src\installer\output\Color-P-Setup-<版本>.exe `
 ### 方式一：直接安装（推荐，不需要编译）
 
 从 [Releases](https://github.com/TangSong777/Color-P/releases/latest) 下载
-`Color-P-Setup-0.1.1.exe`（约 27 MB，**内置全部素材，安装时不需要联网**），
+`Color-P-Setup-0.1.0.exe`（约 27 MB，**内置全部素材，安装时不需要联网**），
 **右键以管理员身份运行**，按向导下一步即可。
 
 > **版本号**：`0.1.0` 是 Color-P 自己的版本，与上游小狼毫 `0.17.4` 解耦。
@@ -484,7 +483,7 @@ gh release create <版本> .\src\installer\output\Color-P-Setup-<版本>.exe `
 **静默安装**（适合脚本化或重装）：
 
 ```powershell
-Color-P-Setup-0.1.1.exe /SILENT /NORESTART /SUPPRESSMSGBOXES
+Color-P-Setup-0.1.0.exe /SILENT /NORESTART /SUPPRESSMSGBOXES
 ```
 
 安装向导需要管理员权限（`PrivilegesRequired=admin`），所以静默安装同样要在**已提权的
