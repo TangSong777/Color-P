@@ -19,6 +19,7 @@
 #
 # 上游在此固定了 14 条纯英文（go/Amazon/code…），用于修正纠错误判。
 # Color-P 定制已按要求移除这些条目：本方案不提供任何纯英文候选。
+# 改为只放行用户指定的技术名词（见文件末尾），其余英文一律不出现。
 #
 # version: "2024-03-12"
 #
@@ -49,3 +50,14 @@
 又又又	uuu
 又双叒叕	uuuu
 
+ChatGPT	chatgpt
+Gemini	gemini
+DeepSeek	deepseek
+OpenCode	opencode
+Anthropic	anthropic
+OpenAI	openai
+MicroSoft	microsoft
+Google	google
+PowerShell	powershell
+WinScp	winscp
+Windows	windows
