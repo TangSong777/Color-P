@@ -1,4 +1,4 @@
-﻿"""Behavior tests for the shipped Lua processor; no live user database used.
+"""Behavior tests for the shipped Lua processor; no live user database used.
 
 2026-10 变更：数字已加入 speller/alphabet，以支持「拼音 + 数字/型号」混合造句。
 随之而来的语义变化：
@@ -104,6 +104,11 @@ eq(#o,0); eq(e.buffer,'4'); eq(c.input,'ni')
 c,e,k,o=fixture('nihao'); k('2'); eq(c.sel,1); eq(c.input,'nihao')
 c,e,k,o=fixture('nihao'); k('1'); eq(c.sel,0)
 c,e,k,o=fixture('nihao'); k('0'); eq(c.sel,9)          -- 0 表示第 10 个
+-- 翻页后：1-9 是「当前页内」的相对位置，必须加上页偏移（回归：曾只选第一页）
+c,e,k,o,s=fixture('nihao'); s.selected_index=5;  k('1'); eq(c.sel,5)
+c,e,k,o,s=fixture('nihao'); s.selected_index=5;  k('2'); eq(c.sel,6)
+c,e,k,o,s=fixture('nihao'); s.selected_index=10; k('1'); eq(c.sel,10)
+c,e,k,o,s=fixture('nihao'); s.selected_index=0;  k('1'); eq(c.sel,0)
 -- 组合中但没有候选 -> 吞掉，数字不进入输入
 c,e,k,o=fixture('nihao', false); k('3'); eq(c.input,'nihao'); eq(c.sel,nil)
 -- 未组合 -> 交还宿主（正常打出数字）

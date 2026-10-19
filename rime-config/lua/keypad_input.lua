@@ -394,7 +394,16 @@ function keypad_input.func(key, env)
       end
       -- 普通拼音组合：数字已在 alphabet 里，Rime 的 selector 收不到，
       -- 必须在这里代为执行原生选择（否则按 1-9 只会吞键）。
-      context:select(index)
+      --
+      -- 关键：1-9 是「当前页内的相对位置」，必须加上页偏移。
+      -- 否则翻页后仍然会选到第一页的候选（与 RimeSelectCandidate 的算法一致：
+      --   page_start = selected_index / page_size * page_size
+      --   select(page_start + index)）
+      local segment = context.composition:back()
+      local page_size = env.engine.schema.config:get_int("menu/page_size") or 5
+      page_size = math.max(1, page_size)
+      local page_start = math.floor(segment.selected_index / page_size) * page_size
+      context:select(page_start + index)
       return 1
     end
     if context:is_composing() then return 1 end   -- 组合中无候选：吞掉，绝不进拼写

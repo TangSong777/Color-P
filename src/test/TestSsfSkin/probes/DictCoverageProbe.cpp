@@ -143,6 +143,19 @@ int main(int argc, char** argv) {
       api->candidate_list_end(&it);
     }
     if (n == 0) std::printf("  (no candidates)\n");
+    // 打印上下文状态：输入串、页码、高亮位置（排查翻页后行为用）
+    {
+      RIME_STRUCT(RimeContext, ctx);
+      if (api->get_context && api->get_context(sid, &ctx) && ctx.composition.length > 0) {
+        std::printf("  ctx: preedit=\"%s\" cursor=%d num=%d page_no=%d page_size=%d hl=%d last=%d\n",
+                    ctx.composition.preedit ? ctx.composition.preedit : "",
+                    ctx.composition.cursor_pos, ctx.menu.num_candidates,
+                    ctx.menu.page_no, ctx.menu.page_size,
+                    ctx.menu.highlighted_candidate_index,
+                    ctx.menu.is_last_page ? 1 : 0);
+      }
+      if (api->free_context) api->free_context(&ctx);
+    }
     // 打印是否发生了上屏（验证 1-9 选词在数字进入 alphabet 后仍然有效）
     RIME_STRUCT(RimeCommit, commit);
     if (api->get_commit && api->get_commit(sid, &commit) && commit.text) {
