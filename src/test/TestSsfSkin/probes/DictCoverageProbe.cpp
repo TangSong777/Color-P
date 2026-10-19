@@ -71,20 +71,28 @@ bool FeedsToChar(RimeApi* api, const char* pinyin, const char* expect) {
 }  // namespace
 
 // 用法：DictCoverageProbe.exe <user_data_dir> [shared_data_dir] [--deploy]
+//                                              [--query <keys> [--limit N]]
 //   user_data_dir   含编译好的 build\*.bin（由 WeaselDeployer 部署生成）
 //   shared_data_dir 安装目录下的 data\（提供 opencc 等共享资源；可省略）
 //   --deploy        先在该目录重新部署词库再测（用于对照实验）
+//   --query <keys>  只打印这串输入得到的候选，用于人工对比（不改判定逻辑）
+//   --limit N       配合 --query，最多打印 N 条（默认 20）
 int main(int argc, char** argv) {
   if (argc < 2) {
-    std::printf("usage: %s <user_data_dir> [shared_data_dir] [--deploy]\n", argv[0]);
+    std::printf("usage: %s <user_data_dir> [shared_data_dir] [--deploy] "
+                "[--query <keys>] [--limit N]\n", argv[0]);
     return 2;
   }
   const char* dir = argv[1];
   const char* shared = dir;
   bool deploy = false;
+  const char* query = nullptr;
+  int limit = 20;
   for (int i = 2; i < argc; ++i) {
-    if (std::strcmp(argv[i], "--deploy") == 0) deploy = true;
-    else shared = argv[i];
+    if (std::strcmp(argv[i], "--deploy") == 0) { deploy = true; continue; }
+    if (std::strcmp(argv[i], "--query") == 0 && i + 1 < argc) { query = argv[++i]; continue; }
+    if (std::strcmp(argv[i], "--limit") == 0 && i + 1 < argc) { limit = std::atoi(argv[++i]); continue; }
+    shared = argv[i];
   }
 
   RimeApi* api = rime_get_api();
@@ -116,6 +124,31 @@ int main(int argc, char** argv) {
     std::printf("current schema = %s\n", have ? schema : "(null)");
     api->destroy_session(probe);
   }
+  if (query) {
+    // --query 模式：只把候选打印出来，供人工对比（例如确认英文单词是否还在）。
+    const RimeSessionId sid = api->create_session();
+    api->select_schema(sid, "rime_ice");
+    api->simulate_key_sequence(sid, query);
+    std::printf("\nquery \"%s\" candidates:\n", query);
+    int n = 0;
+    RimeCandidateListIterator it;
+    std::memset(&it, 0, sizeof(it));
+    if (api->candidate_list_begin(sid, &it)) {
+      while (n < limit && api->candidate_list_next(&it)) {
+        std::printf("  %2d. %s%s%s\n", ++n,
+                    it.candidate.text ? it.candidate.text : "(null)",
+                    it.candidate.comment ? "  " : "",
+                    it.candidate.comment ? it.candidate.comment : "");
+      }
+      api->candidate_list_end(&it);
+    }
+    if (n == 0) std::printf("  (no candidates)\n");
+    api->destroy_session(sid);
+    api->finalize();
+    std::printf("\nquery total: %d\n", n);
+    return 0;
+  }
+
   std::printf("\n%-8s %-10s %s\n", "pinyin", "char", "result");
   for (const auto& c : kCases) {
     const bool ok = FeedsToChar(api, c.pinyin, c.expect);
