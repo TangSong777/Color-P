@@ -208,6 +208,17 @@ arduinoqishiyejiunayang              →  Arduino其实也就那样
 > ```powershell
 > pwsh -File .\src\build-support\gen-mixed-tokens.ps1
 > ```
+**词条可以配"简称"**：给词条再加一条更短的编码即可，这样既能整词输入、也能简写后接拼音：
+
+```
+Arduino	ardu	1000      # arduino... 与 ardu... 都出 Arduino 并接后面的词
+STM32	stm	1000
+ESP32	esp	1000
+```
+
+实测 `arduqishiyejiunayang` → 「Arduino其实也就那样」。简称必须**避开拼音**：
+像 `py`、`de`、`shi` 这类会被正常打字抢走，不要用；`ardu`、`stm`、`esp` 这类不是拼音，
+安全。加简称只是往 `mixed_tokens.dict.yaml` 追加一行，改完重新部署即可。
 **关键权衡：数字的归属按"按键来源"区分**
 
 | 你的操作 | 行为 |
