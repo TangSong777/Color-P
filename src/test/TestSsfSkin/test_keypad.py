@@ -103,12 +103,16 @@ eq(#o,0); eq(e.buffer,'4'); eq(c.input,'ni')
 -- 普通拼音组合（无虚拟尾巴）-> 代为执行原生选择，索引 0-based
 c,e,k,o=fixture('nihao'); k('2'); eq(c.sel,1); eq(c.input,'nihao')
 c,e,k,o=fixture('nihao'); k('1'); eq(c.sel,0)
-c,e,k,o=fixture('nihao'); k('0'); eq(c.sel,9)          -- 0 表示第 10 个
--- 翻页后：1-9 是「当前页内」的相对位置，必须加上页偏移（回归：曾只选第一页）
+-- 只接受「当前页可见」的数字：页大小 5 时，6-9/0 不选词、不进输入
+c,e,k,o=fixture('nihao'); k('6'); eq(c.sel,nil); eq(c.input,'nihao')
+c,e,k,o=fixture('nihao'); k('9'); eq(c.sel,nil); eq(c.input,'nihao')
+c,e,k,o=fixture('nihao'); k('0'); eq(c.sel,nil); eq(c.input,'nihao')
+-- 翻页后：1-5 是「当前页内」的相对位置，必须加上页偏移（回归：曾只选第一页）
 c,e,k,o,s=fixture('nihao'); s.selected_index=5;  k('1'); eq(c.sel,5)
 c,e,k,o,s=fixture('nihao'); s.selected_index=5;  k('2'); eq(c.sel,6)
 c,e,k,o,s=fixture('nihao'); s.selected_index=10; k('1'); eq(c.sel,10)
 c,e,k,o,s=fixture('nihao'); s.selected_index=0;  k('1'); eq(c.sel,0)
+c,e,k,o,s=fixture('nihao'); s.selected_index=5;  k('6'); eq(c.sel,nil)
 -- 组合中但没有候选 -> 吞掉，数字不进入输入
 c,e,k,o=fixture('nihao', false); k('3'); eq(c.input,'nihao'); eq(c.sel,nil)
 -- 未组合 -> 交还宿主（正常打出数字）

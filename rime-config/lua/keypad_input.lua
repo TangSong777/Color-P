@@ -403,12 +403,29 @@ function keypad_input.func(key, env)
       local page_size = env.engine.schema.config:get_int("menu/page_size") or 5
       page_size = math.max(1, page_size)
       local page_start = math.floor(segment.selected_index / page_size) * page_size
+      -- 只接受「当前页可见」的数字：页大小为 5 时，6/7/8/9/0 一律不选词。
+      -- 否则按 6 会跳到下一页的第一个候选，与用户看到的候选框不符。
+      if index >= page_size then return 1 end
       context:select(page_start + index)
       return 1
     end
     if context:is_composing() then return 1 end   -- 组合中无候选：吞掉，绝不进拼写
     return 2
   end
+  -- Shift+- （下划线）：
+  --   组合中 -> 插入占位符 vvu，作为字面量参与造句，显示为单个 "_"
+  --   未组合 -> 不拦截，交还标点层按中文标点输出 "——"（与普通标点一致）
+  if (bare == "underscore" or key_repr == "underscore" or key_repr == "_" or
+      key_repr == "Shift+minus") and
+      (context:has_menu() or context:is_composing()) then
+    local input = context.input or ""
+    local raw = input .. env.tail
+    local position = env.tail_cursor > 0 and (#input + env.tail_cursor)
+        or math.max(0, math.min(context.caret_pos or #input, #input))
+    env.edit_raw(insert_at(raw, position, "vvu"), position + 3)
+    return 1
+  end
+
   -- 没有候选框（没输入过字母）时，小键盘字符和标点都直接上屏。
   -- 有候选框时走下面的混合输入分支，塞进候选框。
   if not context:is_composing() then
@@ -424,10 +441,30 @@ function keypad_input.func(key, env)
       return 1
     end
   end
-  -- The key binder now follows this processor. Preserve its paging/shortcut
-  -- ownership instead of turning top-row -/= into mixed literals.
-  if context:has_menu() and (key_repr == "minus" or key_repr == "equal") then
+  -- 主键盘 -/= 的分工：
+  --   =  : 始终翻下一页（有候选时）
+  --   -  : 已翻页（不在第 1 页）时翻回上一页；仍在第 1 页时作为字面量插入
+  -- 字面量用占位符 vvv（词条 DASH -> vvv），由 dash_filter 显示成 "-"。
+  -- 之所以不直接插入 "-"：Rime 的词条文件是 YAML，"-" 开头的行会被当成列表项，
+  -- 无法登记「编码为 -」的词条，因而 "-" 不会参与造句。
+  if context:has_menu() and key_repr == "equal" then
     return 2
+  end
+
+  if key_repr == "minus" and (context:has_menu() or context:is_composing()) then
+    if context:has_menu() then
+      local segment = context.composition:back()
+      local page_size = env.engine.schema.config:get_int("menu/page_size") or 5
+      page_size = math.max(1, page_size)
+      local page_start = math.floor(segment.selected_index / page_size) * page_size
+      if page_start > 0 then return 2 end        -- 已翻页 -> 上一页
+    end
+    local input = context.input or ""
+    local raw = input .. env.tail
+    local position = env.tail_cursor > 0 and (#input + env.tail_cursor)
+        or math.max(0, math.min(context.caret_pos or #input, #input))
+    env.edit_raw(insert_at(raw, position, "vvv"), position + 3)
+    return 1
   end
   if mixed and key_repr == "Escape" then
     env.clear_virtual_state(); context:clear(); return 1

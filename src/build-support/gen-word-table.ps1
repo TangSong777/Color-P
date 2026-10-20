@@ -123,9 +123,13 @@ Add-Line ''
 
 # ---- 型号词条（有编码但不在 custom_phrase 里的）----
 $extraTokens = $tokens | Where-Object { -not ($english | Where-Object { $_.Code -eq $_.Code -and $_.Word -eq $_.Word }) }
-$extraTokens = @($tokens | Where-Object { $c = $_; -not ($english | Where-Object { $_.Word -eq $c.Word -and $_.Code -eq $c.Code }) })
+$extraTokens = @($tokens | Where-Object {
+  $tok = $_
+  $tok.Code -notin @('vvv','vvu') -and
+  -not ($english | Where-Object { $_.Word -eq $tok.Word -and $_.Code -eq $tok.Code })
+})
 if ($extraTokens.Count) {
-  Add-Line "## 型号 / 含数字词条（$($extraTokens.Count) 条）"
+  Add-Line "## 其它参与造句的词条（$($extraTokens.Count) 条）"
   Add-Line ''
   Add-Line '数字需用**小键盘**输入；它们同样参与造句。'
   Add-Line ''

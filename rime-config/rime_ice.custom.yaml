@@ -94,3 +94,16 @@ patch:
   # 数字进入 alphabet 后，主键盘数字本会被 speller 吃掉，所以 keypad_input.lua 里
   # 加了拦截：主键盘数字只用于选词，永不进入输入串；只有小键盘数字才作为拼写输入。
   speller/alphabet: "zyxwvutsrqponmlkjihgfedcbaZYXWVUTSRQPONMLKJIHGFEDCBA`0123456789"
+
+  # 把占位符 DASH 显示成连字符（配合 keypad_input 的 '-' 输入）
+  engine/filters/+:
+    - lua_filter@*dash_filter
+
+  # 预编辑里把占位符 vvv 显示成连字符（与 dash_filter 对应）
+  translator/preedit_format/+:
+    - xform/vvv/-/
+    - xform/vvu/_/
+
+  # Shift+- 只输出单个下划线，不再用破折号 '——'
+  punctuator/half_shape/_ : "_"
+  punctuator/full_shape/_ : "_"

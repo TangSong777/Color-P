@@ -39,7 +39,7 @@ $SrcRoot     = Split-Path $Root -Parent          # ..\src
 $Payload     = Join-Path $Root 'payload'
 $UpstreamVer = '0.17.4'
 # Color-P 自身的版本号：与上游小狼毫版本解耦（上游版本只决定安装目录与内嵌官方安装器）。
-$PackageVersion = '0.1.1'
+$PackageVersion = '0.1.2'
 
 function Say([string]$m) { Write-Host "  $m" }
 function Head([string]$m) { Write-Host "`n=== $m ===" -ForegroundColor Cyan }
