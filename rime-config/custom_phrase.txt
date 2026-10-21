@@ -124,3 +124,8 @@ ZeroTier	zerotier
 Desktop	desktop
 Patina	patina
 杨寒淋	yanghanlin
+prompt	prompt
+README	readme
+English	english
+Chinese	chinese
+Markdown	markdown

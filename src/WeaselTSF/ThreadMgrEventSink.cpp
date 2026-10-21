@@ -40,10 +40,18 @@ STDMETHODIMP WeaselTSF::OnSetFocus(ITfDocumentMgr* pDocMgrFocus,
 }
 
 STDMETHODIMP WeaselTSF::OnPushContext(ITfContext* pContext) {
+  // 输入焦点换到另一个输入框/控件时，TSF 会为新上下文 PushContext。
+  // 若这里还留着上一处的组合，候选窗就会被绘制到新位置，却已经没有任何作用
+  //（用户看到的「UI 跟着切过去，但按键无效」）。组合属于旧上下文，直接终止。
+  if (_IsComposing() && pContext != _pEditSessionContext)
+    _AbortComposition();
   return S_OK;
 }
 
 STDMETHODIMP WeaselTSF::OnPopContext(ITfContext* pContext) {
+  // 组合所在的上下文被弹出，说明该输入框已经离开；不能留下可被重新显示的组合。
+  if (_IsComposing() && pContext == _pEditSessionContext)
+    _AbortComposition();
   return S_OK;
 }
 

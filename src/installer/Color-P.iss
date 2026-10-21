@@ -20,9 +20,9 @@
 ; 0.1.0 = 首个包含「拼音 + 数字/型号混合造句」的正式包
 ;         （词条显示文本不含空格）。
 ; 历史包：0.0.1 … 0.0.6（原 v0.17.4-colorp、v0.17.4-colorp.2 … .6）。
-#define MyAppVersion "0.1.2"
+#define MyAppVersion "0.1.3"
 ; Windows 文件属性里显示的四段式版本
-#define MyAppVersionQuad "0.1.2.0"
+#define MyAppVersionQuad "0.1.3.0"
 #define MyAppPublisher "TangSong777"
 #define MyAppURL "https://github.com/TangSong777/Color-P"
 ; 上游小狼毫版本：只决定安装目录与内嵌的官方安装器，不随 Color-P 版本变化

@@ -6,9 +6,9 @@ Color-P 是一个个人定制的 Windows 中文输入法发行版：以 [Weasel 
 
 | | |
 |---|---|
-| 当前版本 | `0.1.2` |
+| 当前版本 | `0.1.3` |
 | 上游版本 | Weasel `0.17.4` / librime `1.13.1` |
-| 安装包 | `Color-P-Setup-0.1.2.exe`（约 27 MB，离线） |
+| 安装包 | `Color-P-Setup-0.1.3.exe`（约 27 MB，离线） |
 | 许可证 | GPL-3.0（代码）· 皮肤素材版权归原作者 |
 
 **目录**
@@ -96,7 +96,7 @@ arduinoqishiyejiunayang              →  Arduino其实也就那样
 |---|---|---|
 | 纯英文单词 | `table_translator@melt_eng` | 已移除。`hello` → 合理了哦，不出英文 |
 | 中英混排词 | `table_translator@cn_en` | 保留。词库 1001 条全部含中文（`X光`、`T恤`、`红Buff`） |
-| 指定名词 | `custom_phrase` + `custom_phrase_complete` | 72 个白名单词，精确命中 + 前缀补全 |
+| 指定名词 | `custom_phrase` + `custom_phrase_complete` | 77 个白名单词，精确命中 + 前缀补全 |
 
 白名单为科技厂商、开发工具、语言与常用软件，按规范大小写写入，**用小写编码输入**。完整清单（编码、分类、是否参与造句）见 **[自定义字词总表](docs/CUSTOM-WORDS.md)**。
 
@@ -174,7 +174,7 @@ rime-ice 默认把 `ts` 作为 Unix 时间戳触发码，而它同时是「唐�
 
 ### 安装包
 
-从 [Releases](https://github.com/TangSong777/Color-P/releases/latest) 下载 `Color-P-Setup-0.1.2.exe`，右键以管理员身份运行。
+从 [Releases](https://github.com/TangSong777/Color-P/releases/latest) 下载 `Color-P-Setup-0.1.3.exe`，右键以管理员身份运行。
 
 安装器依次完成：
 
@@ -190,7 +190,7 @@ rime-ice 默认把 `ts` 作为 Unix 时间戳触发码，而它同时是「唐�
 静默安装（需在已提权终端中运行）：
 
 ```powershell
-Color-P-Setup-0.1.2.exe /SILENT /NORESTART /SUPPRESSMSGBOXES
+Color-P-Setup-0.1.3.exe /SILENT /NORESTART /SUPPRESSMSGBOXES
 ```
 
 安装包不依赖外部组件：Boost 静态链接，`rime.dll` 与 `WinSparkle.dll` 随包提供，上游安装器内嵌。
@@ -437,8 +437,8 @@ import_tables:
 | 位 | 条件 | 示例 |
 |---|---|---|
 | `MAJOR` | 不兼容的大改 | 尚未发生，留给 `1.0.0` |
-| `MINOR` | 新增可感知的能力 | `0.0.6 → 0.1.0` |
-| `PATCH` | 修 bug、调参数、换词库 | `0.0.1 → 0.0.6` |
+| `MINOR` | 成体系的新能力（新增输入方式、整套配置、大范围重构） | `0.0.6 → 0.1.0` |
+| `PATCH` | 修 bug、调参数、换词库、**局部小功能** | `0.0.1 → 0.0.6`、`0.1.1 → 0.1.2` |
 
 混合变更取最高位。完整记录见 [CHANGELOG.md](CHANGELOG.md)。
 
@@ -446,7 +446,8 @@ import_tables:
 
 | 版本 | 说明 |
 |---|---|
-| **0.1.2** | 当前稳定版：候选框内 `-`/`_` 字面量输入、数字选词只认当前页 |
+| **0.1.3** | 当前稳定版：候选去重、白名单 77 词、修复候选框幽灵复现 |
+| 0.1.2 | 候选框内 `-`/`_` 字面量输入、数字选词只认当前页 |
 | 0.1.1 | 文档与发布流程更新（输入功能同 0.1.0） |
 | 0.1.0 | 混合造句、英文白名单 72 词、大字表 41448、时间戳禁用、退格三档 |
 | 0.0.6 | 移除全部键鼠钩子，仓库自包含 |

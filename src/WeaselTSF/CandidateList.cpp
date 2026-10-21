@@ -222,6 +222,19 @@ STDMETHODIMP CCandidateList::FinalizeExactCompositionString() {
 
 void CCandidateList::UpdateUI(const Context& ctx, const Status& status) {
   if (_uiStarting || _uiEnding) return;
+  // 陈旧响应：服务端还在 composing，但 TSF 这一侧的组合已经终止
+  //（典型场景：输入到一半切到别的输入框，组合被终止；切回来时服务端把
+  // 上一次的 composing 上下文又回放了一遍）。此时若照常绘制，就会把旧画面
+  // 重新显示出来 —— 候选还在、字母还在，但按键已经不起作用。
+  // 组合已死、或处在终止后的抑制窗口，都以 TSF 的状态为准：结束 UI 并保持隐藏。
+  if (status.composing &&
+      (!_tsf->_IsComposing() || _tsf->IsUISuppressed())) {
+    if (_uiStarted || _nativeForced)
+      EndUI();
+    Show(FALSE);
+    ResetContext();
+    return;
+  }
   if (ctx.empty() && !status.show_mode_tip) {
     // A literal commit has no candidate presentation. End a previous UI once,
     // if present, but do not schedule layout/paint work for the empty response.
@@ -272,6 +285,9 @@ void CCandidateList::UpdateStyle(const UIStyle& sty) {
 }
 
 void CCandidateList::UpdateInputPosition(RECT const& rc) {
+  // 组合终止后的抑制窗口内不再跟随光标：否则面板会先被挪到新焦点位置
+  // 闪一下，再被隐藏（用户看到的“UI 跟着过去又消失”）。
+  if (_tsf->IsUISuppressed()) return;
   const bool first = !_positionValid;
   _positionValid = true;
   // Remember the anchor even when the native popup does not exist yet: a
@@ -289,6 +305,10 @@ void CCandidateList::Destroy() {
   // elements.  Do not re-enter EndUIElement here; only dispose the native
   // popup and let TSF own the UI-element lifecycle.
   Show(FALSE);
+  // 组合已经终止，窗口里的候选/编码都是上一次输入的残留。若不清掉，
+  // 重新聚焦时 _ShowUI 会重建窗口并把这幅旧画面显示出来 —— 也就是用户看到的
+  // “幽灵候选”：候选框回来了、字母还在，但按键已经不起作用。
+  ResetContext();
   // Destroy() is reached twice for one composition in the ordinary
   // focus-change sequence (once from _AbortComposition, once when the next
   // composition starts).  Disposing an already disposed window and re-arming
@@ -299,6 +319,16 @@ void CCandidateList::Destroy() {
     return;
   _DisposeUIWindow();
   _nativeWindowDestroyed = (_uiStarted || _nativeForced) && _ShouldShowNative();
+}
+
+void CCandidateList::ResetContext() {
+  _ui->ctx() = weasel::Context();
+  _ui->status() = weasel::Status();
+  _positionValid = false;
+}
+
+bool CCandidateList::HasContext() {
+  return _ui && !_ui->ctx().empty();
 }
 
 void CCandidateList::DestroyAll() {
@@ -461,7 +491,10 @@ void WeaselTSF::_EndUI() {
 }
 
 void WeaselTSF::_ShowUI() {
-  _cand->Show(TRUE);
+  // 焦点回来时不再“恢复”候选窗。窗口里的内容属于上一次输入，
+  // 而组合同样可能已经终止；真正的显示只由服务端的 UpdateUI 触发
+  //（且 UpdateUI 会丢弃组合已终止时的陈旧响应）。
+  _cand->Show(FALSE);
 }
 
 void WeaselTSF::_HideUI() {

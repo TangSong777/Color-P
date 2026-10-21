@@ -130,6 +130,9 @@ STDMETHODIMP WeaselTSF::OnTestKeyDown(ITfContext* pContext,
                                       LPARAM lParam,
                                       BOOL* pfEaten) {
   _fTestKeyUpPending = FALSE;
+  // 组合属于另一个输入框：先终止，别让旧组合继续在新上下文里生效。
+  if (_IsComposing() && _pEditSessionContext && pContext != _pEditSessionContext)
+    _AbortComposition();
   if (!_IsKeyboardDisabled() && _fTestKeyDownPending && _testedKey == wParam && _testedFlags == lParam &&
       _testedContext == pContext && _testedTime == GetMessageTime()) {
     *pfEaten = TRUE;
@@ -150,6 +153,9 @@ STDMETHODIMP WeaselTSF::OnKeyDown(ITfContext* pContext,
                                   LPARAM lParam,
                                   BOOL* pfEaten) {
   _fTestKeyUpPending = FALSE;
+  // 同上：上下文变了就不再沿用旧组合。
+  if (_IsComposing() && _pEditSessionContext && pContext != _pEditSessionContext)
+    _AbortComposition();
   if (!_IsKeyboardDisabled() && _fTestKeyDownPending && weasel_host::SamePendingKey(
           _testedKey, _testedFlags, _testedContext, wParam, lParam, pContext)) {
     _fTestKeyDownPending = FALSE;

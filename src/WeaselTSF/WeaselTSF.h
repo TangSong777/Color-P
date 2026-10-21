@@ -129,6 +129,11 @@ class WeaselTSF : public ITfTextInputProcessorEx,
   void _InvalidateCaret();
   void _FinalizeComposition();
   void _AbortComposition(bool clear = true);
+  // 终止组合同步置位：在异步的结束事务完成之前，服务端可能还会回一条
+  // “仍在组合”的响应；若照常绘制，就会闪出一帧旧候选（用户看到的“闪一下”）。
+  // 抑制期内的 composing 响应一律丢弃，等下一次 _StartComposition 自动解除。
+  bool IsUISuppressed() const { return _uiSuppressed; }
+  void ClearUISuppression() { _uiSuppressed = false; }
 
   /* Language bar */
   HWND _GetFocusedContextWindow();
@@ -224,6 +229,8 @@ class WeaselTSF : public ITfTextInputProcessorEx,
   RECT _lastSentPosition = {};
   bool _sentPositionValid = false;
   ULONGLONG _connectionCheckedAt = 0;
+  // 终止组合后、异步结束事务完成前的抑制窗口，见 IsUISuppressed()。
+  bool _uiSuppressed = false;
 
   com_ptr<ITfContext> _pEditSessionContext;
   std::wstring _editSessionText;

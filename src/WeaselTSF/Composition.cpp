@@ -125,6 +125,8 @@ STDMETHODIMP CStartCompositionEditSession::DoEditSession(TfEditCookie ec) {
 void WeaselTSF::_StartComposition(com_ptr<ITfContext> pContext,
                                   BOOL fCUASWorkaroundEnabled,
                                   BOOL candidateUI) {
+  // 新的组合开始，解除上一次终止留下的抑制状态。
+  _uiSuppressed = false;
   com_ptr<CStartCompositionEditSession> pStartCompositionEditSession;
   pStartCompositionEditSession.Attach(
       new CStartCompositionEditSession(this, pContext, fCUASWorkaroundEnabled,
@@ -348,6 +350,9 @@ STDMETHODIMP CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
 /* Composition Window Handling */
 BOOL WeaselTSF::_UpdateCompositionWindow(com_ptr<ITfContext> pContext) {
   if (!pContext || !_cand) return FALSE;
+  // 组合已终止（或正在终止）时不再跟随光标移动窗口：否则候选面板会先被
+  // 挪到新位置闪一下，再被隐藏。
+  if (_uiSuppressed) return FALSE;
   ++_caretGeneration;  // latest queued read wins; older layout events are stale
   com_ptr<ITfContextView> pContextView;
   if (pContext->GetActiveView(&pContextView) != S_OK)
@@ -562,6 +567,9 @@ STDMETHODIMP WeaselTSF::OnCompositionTerminated(TfEditCookie ecWrite,
 }
 
 void WeaselTSF::_AbortComposition(bool clear) {
+  // 先置抑制位：结束事务是异步的，完成前服务端可能还会回一条“仍在组合”的
+  // 响应；允许它绘制就会闪出一帧旧候选（用户看到的“闪一下”）。
+  _uiSuppressed = true;
   m_client.ClearComposition();
   if (_IsComposing()) {
     // _EndComposition 内部直接 pContext->RequestEditSession(...)，不判空。

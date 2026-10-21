@@ -98,12 +98,9 @@ patch:
   # 把占位符 DASH 显示成连字符（配合 keypad_input 的 '-' 输入）
   engine/filters/+:
     - lua_filter@*dash_filter
+    - lua_filter@*dedupe_filter
 
   # 预编辑里把占位符 vvv 显示成连字符（与 dash_filter 对应）
   translator/preedit_format/+:
     - xform/vvv/-/
     - xform/vvu/_/
-
-  # Shift+- 只输出单个下划线，不再用破折号 '——'
-  punctuator/half_shape/_ : "_"
-  punctuator/full_shape/_ : "_"

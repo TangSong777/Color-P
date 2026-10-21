@@ -55,6 +55,11 @@ class CCandidateList : public ITfIntegratableCandidateListUIElement,
   void DestroyAll();
   void StartUI();
   void EndUI();
+  // 清掉窗口里残留的上一次输入画面。组合终止后若不清，重新聚焦时
+  // _ShowUI 会把这个旧画面重新显示出来（幽灵候选，按键已失效）。
+  void ResetContext();
+  // 当前是否还持有有效的候选上下文（组合被终止后应为 false）。
+  bool HasContext();
 
   com_ptr<ITfContext> GetContextDocument();
   bool GetIsReposition() {

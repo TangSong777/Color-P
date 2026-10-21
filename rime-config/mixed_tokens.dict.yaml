@@ -12,6 +12,9 @@ sort: by_weight
 
 ESP32	esp32	100000
 STM32	stm32	100000
+DASH	vvv	1000
+USCORE	vvu	1000
+杨寒淋	yanghanlin	100000
 ChatGPT	chatgpt	1000
 Gemini	gemini	1000
 DeepSeek	deepseek	1000
@@ -84,6 +87,8 @@ Wallpaper	wallpaper	1000
 ZeroTier	zerotier	1000
 Desktop	desktop	1000
 Patina	patina	1000
-DASH	vvv	1000
-杨寒淋	yanghanlin	100000
-USCORE	vvu	1000
+prompt	prompt	1000
+README	readme	1000
+English	english	1000
+Chinese	chinese	1000
+Markdown	markdown	1000
