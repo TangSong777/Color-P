@@ -23,6 +23,8 @@ Color-P 是一个个人定制的 Windows 中文输入法发行版：以 [Weasel 
 | 输入数字、型号、英文、符号 | [功能](#功能) |
 | 用计算器 | [功能 · 计算器](#计算器) |
 | 加自己的词 | [配置与词条](#配置与词条) → [扩展 · 词条](#词条) |
+| 换台机器 / 搬到别的输入法 | [迁移整套配置](#迁移整套配置) |
+| 调整候选排序（权重） | [权重分层](#权重分层) |
 | 排查「为什么不出候选」 | [已知限制](#已知限制) |
 | 自己编译、跑测试 | [构建与测试](#构建与测试) |
 | 了解实现原理 | [实现要点](#实现要点) |
@@ -44,7 +46,7 @@ Color-P 是一个个人定制的 Windows 中文输入法发行版：以 [Weasel 
 
    ```
    nihao        →  你好
-   esp32bistm32haoyong  →  ESP32比STM32好用
+   esp32bistm32haoyong  →  ESP32比STM32好用   （数字用小键盘打）
    chat         →  ChatGPT
    ```
 
@@ -112,6 +114,9 @@ esp32bistm32haoyong                  →  ESP32比STM32好用
 youyijianshiqingshishuo32meiyou26da  →  有一件事情是说32没有26大
 arduinoqishiyejiunayang              →  Arduino其实也就那样
 ```
+
+> 上面三个例子里的数字都来自**小键盘**。真实打字时主键盘数字会被当作选词键，
+> 只有小键盘数字才会进入输入串。
 
 实现由三部分组成：
 
@@ -254,7 +259,7 @@ Color-P-Setup-0.1.4.exe /SILENT /NORESTART /SUPPRESSMSGBOXES
 nihao                        →  你好
 nihao-woshiyanghanlin        →  你好-我是杨寒淋
 nihao_woshiyanghanlin        →  你好_我是杨寒淋
-esp32bistm32haoyong          →  ESP32比STM32好用
+esp32bistm32haoyong          →  ESP32比STM32好用（数字用小键盘）
 chat                         →  ChatGPT（前缀补全）
 markdownqishiyejiunayang     →  Markdown其实也就那样
 cC 1 0 0 / 4                 →  100/4=25.0（小键盘）
@@ -289,6 +294,112 @@ pwsh -File .\src\build-support\gen-numeric-dict.ps1 -Max 99999
 ```
 
 完整词条清单见 [自定义字词总表](docs/CUSTOM-WORDS.md)（由 `gen-word-table.ps1` 生成，勿手改）。
+
+### 权重分层
+
+候选的先后不是靠调一个开关，而是**四处权重叠加**的结果：
+
+| 来源 | 权重 | 写在哪 | 作用 |
+|---|---|---|---|
+| 精确词条 | `initial_quality: 99` | `rime_ice.custom.yaml` → `custom_phrase` | 精确码（`chatgpt`）稳定首位 |
+| 前缀补全 | `initial_quality: 0.9` | `rime_ice.custom.yaml` → `custom_phrase_complete` | 补全（`chat`）能选到，但排在拼音之后 |
+| 造句词条 | 第三列 `1000` / `100000` | `mixed_tokens.dict.yaml` | 白名单词 1000；型号与人名 100000 |
+| 数字词条 | 第三列 `1000` | `numeric.dict.yaml` | 0–99999 |
+| 词库整体 | 列表顺序 | `rime_ice.dict.yaml` → `import_tables` | 越靠前权重越高 |
+
+拼音译文器的默认权重约 `1.2`，高于补全的 `0.9`，所以单字母输入仍是中文优先：
+
+```
+g  →  「个」等中文（不是 Gemini / GitHub）
+chat → ChatGPT 出现在中文之后，但可以选到
+```
+
+调权重的四个常用动作：
+
+| 想要 | 改哪里 | 说明 |
+|---|---|---|
+| 英文精确码压过中文 | `custom_phrase/initial_quality`（99 → 更高） | 单字母输入会开始出现英文，慎调 |
+| 前缀补全更靠前 | `custom_phrase_complete/initial_quality`（0.9 → 1.1~1.3） | 超过 1.2 后补全会挤到中文前 |
+| 某个词造句时更靠前 | `mixed_tokens.dict.yaml` 该行第三列 | 改完重新部署 |
+| 整个词库优先级 | `rime_ice.dict.yaml` 的 `import_tables` 顺序 | 越靠前越优先 |
+
+### 迁移整套配置
+
+把当前这套「词库 + 权重 + 设置」原样搬到另一处，按目标分两种场景。
+
+#### A. 搬到另一台机器（连同输入法本体）
+
+适用于换电脑、重装系统。
+
+1. 新机器安装**同版本**安装包（`Color-P-Setup-0.1.4.exe`），装完重启
+2. 托盘菜单 →「退出」，确认 `WeaselServer.exe` 已结束（否则文件被占用）
+3. 把下表文件覆盖到新机器的 Rime 用户目录（托盘菜单 →「用户文件夹」）
+4. 确认 `weasel.custom.yaml` 的 `style/ssf_skin` 指向新机器实际皮肤路径
+5. 托盘菜单 →「重新部署」
+6. 重新启动 `WeaselServer.exe`
+
+#### B. 搬到已有小狼毫（只搬配置与词库）
+
+适用于同事/另一台已装官方小狼毫的机器，只要输入行为一致。
+
+1. 备份对方原有的 Rime 用户目录
+2. 按上表复制文件（**不含**输入法本体，皮肤需要另外准备）
+3. 若对方没有大字表，`rime_ice.dict.yaml` 里 `cn_dicts/41448` 一行会找不到文件；要么补齐词库，要么先注释掉
+4. 重新部署
+
+#### 必带文件清单
+
+| 文件 | 作用 | 属于 |
+|---|---|---|
+| `rime_ice.custom.yaml` | **权重与全部行为开关**（处理器/翻译器顺序、按键、时间戳禁用、补全分层、`alphabet`、过滤器） | 本项目独有 |
+| `custom_phrase.txt` | 80 个英文白名单 + 22 个中文短码 | 本项目独有 |
+| `mixed_tokens.dict.yaml` | 参与造句的词条（含权重列） | 本项目独有 |
+| `numeric.dict.yaml` | 0–99999 数字词条（1.7 MB） | 本项目独有 |
+| `rime_ice.dict.yaml` | 词库挂载表与顺序（**权重顺序就在这里**） | 本项目改过 |
+| `lua/keypad_input.lua` | 小键盘与数字混合输入 | 本项目独有 |
+| `lua/dash_filter.lua` | `DASH`/`USCORE` 占位符还原 | 本项目独有 |
+| `lua/dedupe_filter.lua` | 候选去重 | 本项目独有 |
+| `weasel.custom.yaml` | SSF 皮肤、配色、布局 | 本项目独有 |
+| `default.custom.yaml` | 方案列表与全局快捷键 | 按需 |
+
+其余 `lua/*.lua`（`corrector`、`pin_cand_filter`、`calc_translator` 等）与 `cn_dicts/`、`en_dicts/`、`opencc/` 都是 **rime-ice 上游内容**，随安装包分发，正常安装即可，不需要单独搬。
+
+#### 可以不带的东西
+
+| 内容 | 原因 |
+|---|---|
+| `installation.yaml` / `user.yaml` | 本机安装信息，带过去会指向错误的目录 |
+| `sync/` | 同步快照；两边同时存在时，重新部署可能把词频回退成旧值 |
+| `build/` | 编译缓存，重新部署会自动重建 |
+| `*.userdb/` | 用户词典与调频记录。**想保留自己的用词习惯就带上**，只想要干净初始状态则跳过 |
+
+#### 迁移后校验
+
+```powershell
+# 1. 词条数量对不对（应为 英文 80 / 中文 22）
+pwsh -File .\src\build-support\gen-word-table.ps1 `
+    -CustomPhrase <新目录>\custom_phrase.txt `
+    -MixedTokens <新目录>\mixed_tokens.dict.yaml `
+    -NumericDict <新目录>\numeric.dict.yaml `
+    -Out <临时文件>
+
+# 2. 走真实输入链路验证候选与权重
+.\src\dist\dict-probe.exe <新用户目录副本> <安装目录>\data --query chatgpt --limit 3
+.\src\dist\dict-probe.exe <新用户目录副本> <安装目录>\data --query g --limit 5
+```
+
+预期：`chatgpt` 首位是 `ChatGPT` 且只有一条；`g` 首位仍是中文；
+带数字的句子要按**真实按键序列**验证（数字必须走小键盘，主键盘数字会被当作选词）：
+
+```powershell
+.\src\dist\dict-probe.exe <新用户目录副本> <安装目录>\data `
+    --query "esp{KP_3}{KP_2}bistm{KP_3}{KP_2}haoyong" --limit 3
+# 预期：ESP32比STM32好用
+```
+
+> 探针的 `--query` 若直接写 `esp32bistm32haoyong`（不指定按键），数字会被当成普通字符一次性解析，
+> 分段结果与逐键输入不同，不能用来判断真实打字行为。
+
 
 ## 已知限制
 
