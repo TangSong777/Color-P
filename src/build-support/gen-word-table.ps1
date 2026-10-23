@@ -28,7 +28,7 @@ foreach ($f in @($CustomPhrase, $MixedTokens)) {
 # 分类表：保持与 README 的白名单分组一致；未命中的词条归入「其他」
 $categories = [ordered]@{
   'AI/模型'  = @('ChatGPT','Gemini','DeepSeek','OpenCode','Anthropic','OpenAI','Claude',
-                 'Copilot','Qwen','Kimi','Grok','prompt')
+                 'Copilot','Qwen','Kimi','Grok','prompt','Codex')
   '厂商/平台' = @('MicroSoft','Google','Windows','Ubuntu','Linux','Debian','Docker','Vim',
                  'VMware','VPN','NVIDIA','Intel','AMD','GitHub','GitLab','VSCode',
                  'PowerShell','WinScp')
@@ -37,7 +37,7 @@ $categories = [ordered]@{
                  'Multisim','SolidWorks','AutoCAD','STM32CubeMX','STM32CubeIDE','Keil',
                  'Arduino','PlatformIO','Blender','Chrome','Geek','Flash','OBS',
                  'PowerPoint','Excel','Word','XMind','Obsidian','Notion')
-  '工具/其他' = @('Listary','PixPin','ZeroTier','Wallpaper','Desktop','Patina','README')
+  '工具/其他' = @('Listary','PixPin','ZeroTier','Wallpaper','Desktop','Patina','README','WorkSpace')
 }
 
 function Get-Category([string]$word) {

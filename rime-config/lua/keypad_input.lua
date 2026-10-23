@@ -299,7 +299,7 @@ function keypad_input.init(env)
     env.tail_cursor = math.max(0, position - length)
     publish_tail()
   end
-  env.edit_raw = function(raw, position)
+  env.edit_raw = function(raw, position, calc)
     local original_position = position
     local previous_buffer, previous_raw = env.buffer, env.raw_buffer
     env.prefix_cursor = nil
@@ -310,7 +310,13 @@ function keypad_input.init(env)
     env.raw_buffer = env.raw_buffer .. leading
     raw = raw:sub(#leading + 1)
     position = position - #leading
-    local active = raw:match("^([A-Za-z'0-9]*)") or ""
+    -- calc 模式：运算符也属于活跃输入，交给计算器翻译器求值
+    local active
+    if calc then
+      active = raw:match("^([A-Za-z'0-9%+%-%*/%.]*)") or ""
+    else
+      active = raw:match("^([A-Za-z'0-9]*)") or ""
+    end
     env.tail = raw:sub(#active + 1)
     env.replace_active_input(active)
     if active == "" then
@@ -371,6 +377,28 @@ function keypad_input.func(key, env)
   if not key:release() then env.shift_armed = false end
   if key:release() then return 2 end
   if context.get_option and context:get_option("ascii_mode") then return 2 end
+  -- 计算器模式：input 以 cC 开头时，把数字与小键盘运算符送进真实输入串，
+  -- 交给 lua_translator@*calc_translator 求值。其它模式下这些键的行为完全不变。
+  local calc_input = context.input or ""
+
+  if calc_input:sub(1, 2) == "cC" then
+    local calc_ch = nil
+    -- 只认小键盘：主键盘数字仍是选词键，主键盘符号仍走标点/字面量逻辑。
+    if key_repr:match("^KP_(%d)$") then calc_ch = key_repr:match("^KP_(%d)$")
+    elseif key_repr == "KP_Add" then calc_ch = "+"
+    elseif key_repr == "KP_Subtract" then calc_ch = "-"
+    elseif key_repr == "KP_Multiply" then calc_ch = "*"
+    elseif key_repr == "KP_Divide" then calc_ch = "/"
+    elseif key_repr == "KP_Decimal" then calc_ch = "."
+    end
+    -- 尾巴非空说明主键盘敲了字面量：不接管，交回原有逻辑，避免吞字符。
+    if calc_ch and env.tail == "" then
+      local raw = calc_input
+      local pos = math.max(0, math.min(context.caret_pos or #calc_input, #calc_input))
+      env.edit_raw(insert_at(raw, pos, calc_ch), pos + #calc_ch, true)
+      return 1
+    end
+  end
   -- 主键盘数字：只用于选词，绝不作为输入字符。
   --
   -- 数字已加入 speller/alphabet（供小键盘输入数字），若不在最前面拦下来，主键盘

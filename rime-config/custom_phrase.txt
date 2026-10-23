@@ -129,3 +129,6 @@ README	readme
 English	english
 Chinese	chinese
 Markdown	markdown
+Bug	bug
+Codex	codex
+WorkSpace	workspace
