@@ -1,23 +1,40 @@
 ---
 name: github-release-discipline
-description: Use when maintaining the Color-P GitHub repository — committing, pushing, bumping a version, building the installer, tagging, publishing a release, writing release notes, or rolling one back. Enforces "no automatic sync or version bump" and the exact release/rollback checklist.
+description: Use when maintaining the Color-P GitHub repository — committing, pushing, bumping a version, building the installer, tagging, publishing a release, writing release notes, or rolling one back. Enforces the snapshot-branch model ("commit is not release") and the exact release/rollback checklist.
 ---
 
 # 维护 Color-P 的 GitHub（仓库 + 发布）
 
-## 铁律：不做自动同步
+## 分支模型
 
-用户的明确要求：
+```
+snapshot ──► master ──► tag + Release
+（工作分支）  （只做合并）    （发版产物）
+```
 
-- **未经明确指令，不提交、不推送、不升版本、不打标签、不重建发布包。**
-- 日常改动（加词、修 bug、改文档、调参数）只做三件事：
-  **改本地文件 → 部署验证 → 留在工作区**。
-- 项目始终只维护**一个稳定版本**；改动先累积，等指令再一并定稿。
-- 用户只是提了个修改建议时，改完、验证完、报告即可 —— **不要顺手 `git commit`**。
+| 分支 | 角色 | 谁能改 |
+|---|---|---|
+| `snapshot` | 跟随本地的工作分支，**默认工作分支** | 日常自动提交推送 |
+| `master` | 稳定版，内容永远等于某个 snapshot 提交 | 仅在「更新版本」时 fast-forward 合并 |
 
-只有这几类指令才动 git 与 Release：「更新版本」「发版」「同步仓库」「回滚」。
+**铁律：`master` 永不直接提交，只接受 `git merge --ff-only snapshot`。**
+默认分支保持 `master`，访客看到的始终是稳定版。
 
-判断口诀：**内容改动 ≠ 版本改动**。内容改动默认留在本地。
+## 铁律：提交 ≠ 发布
+
+| 动作 | 规则 |
+|---|---|
+| 提交 + 推送 `snapshot` | ✅ **允许并默认执行**（每完成一件事一次提交） |
+| 改动 `master` | ❌ 仅在「更新版本」时 |
+| 改版本号 / 打 tag / 发 Release / 重建安装包 | ❌ 仅在「更新版本」时 |
+
+- 日常改动（加词、修 bug、改文档、调参数）：**改本地 → 部署验证 → 记账 → 提交推送 snapshot**。
+- 项目始终只维护**一个稳定版本**（当前 `0.1.4`）。
+- 用户只是提了个修改建议时，改完、验证完、记账、提交 snapshot、报告即可 —— **不要动 master，不要 bump 版本**。
+
+只有这几类指令才动 master / 版本 / Release：「更新版本」「发版」「回滚」。
+
+判断口诀：**内容改动 ≠ 版本改动**。内容改动提交到 snapshot，但不动 master。
 
 ## 每次改动都要记账
 
@@ -44,22 +61,32 @@ description: Use when maintaining the Color-P GitHub repository — committing, 
 
 ## 收到「更新版本」指令后的固定顺序
 
-不可跳步、不可提前。
+不可跳步、不可提前。全程在 `snapshot` 分支上操作，最后一步才合并到 `master`。
 
 1. **读账本 + 汇总**：
    - 完整读取 `PENDING-CHANGES.md`（**从上到下全读，不要只读最近的**）
    - `git log --oneline <上一个标签>..HEAD`、`git status --porcelain`、`git diff --stat`
    - 两相对照，确保**没有一条改动被漏掉**（尤其是不在账本里的历史提交）
 2. **写日志**：按下面的模板补进 `CHANGELOG.md`，逐条核对账本条目都进了发布说明。
-3. **统一提交**：把此前累积的所有改动一次性 `git add -A` + commit + push。
-4. **改版本号**（两处，必须一致）：
+3. **改版本号**（两处，必须一致）：
    - `src/installer/Color-P.iss` → `MyAppVersion`、`MyAppVersionQuad`
    - `src/installer/build-installer.ps1` → `$PackageVersion`
-5. **打包**：`pwsh -File src\installer\build-installer.ps1`
-6. **打标签**：`git tag -a <版本> -m "Color-P <版本>"` + `git push origin <版本>`
-7. **发 Release**：exe + `SHA256SUMS.txt`，加 `--latest`
-8. **清空账本**：把 `PENDING-CHANGES.md` 复原成只有标题与使用说明，并更新「当前稳定版本」
-9. **核验**：见「发布后必查」
+4. **清空账本**：把 `PENDING-CHANGES.md` 复原成只有标题与使用说明，并更新「当前稳定版本」。
+5. **提交并推送 snapshot**：`git add -A` + commit（消息写「发布 x.y.z」）+ `git push`。
+   **此时还不能打 tag** —— 先证明这个提交能打出包。
+6. **打包**：`pwsh -File src\installer\build-installer.ps1`，核对 exe 版本资源与载荷哈希。
+7. **合并 master**：`git checkout master` + `git merge --ff-only snapshot` + `git push`。
+   合并失败说明 master 被污染，先停下来查原因，**不要**改用普通 merge 掩盖。
+8. **核对两分支一致**：`git rev-parse master` 必须等于 `git rev-parse snapshot`。
+9. **打标签**：在 `master` 上 `git tag -a <版本> -m "Color-P <版本>"` + `git push origin <版本>`。
+10. **发 Release**：exe + `SHA256SUMS.txt`，加 `--latest`。
+11. **切回 snapshot**：后续工作继续在 snapshot 上进行。
+12. **核验**：见「发布后必查」。
+
+### 顺序为什么是这样
+
+bump 版本与打包验证都在合并之前。若打包失败，snapshot 上最多多一个「发布 x.y.z」提交
+（可 `git revert`），master 与 tag 完全没被污染 —— 稳定版永远指向一个真的能出包的提交。
 
 ### 版本位判定（SemVer `0.0.0`）
 
@@ -67,7 +94,7 @@ description: Use when maintaining the Color-P GitHub repository — committing, 
 |---|---|---|
 | `MAJOR` | 不兼容的大改（引擎、安装布局、配置格式破坏） | 尚未发生 |
 | `MINOR` | 成体系的新能力（新输入方式、整套配置、大范围重构） | `0.0.6 → 0.1.0` |
-| `PATCH` | 修 bug / 调参 / 换词库 / **局部小功能** | `0.0.1 → 0.0.6`、`0.1.1 → 0.1.2` |
+| `PATCH` | 修 bug / 调参 / 换词库 / **局部小功能** | `0.0.1 → 0.0.6`、`0.1.3 → 0.1.4` |
 
 一次发布混合多种变更时取**最高位**（新特性 + 修 bug ⇒ 升 MINOR，PATCH 归零）。
 
@@ -104,6 +131,7 @@ description: Use when maintaining the Color-P GitHub repository — committing, 
 | exe 版本资源 | `(Get-Item $exe).VersionInfo` | FileVersion `x.y.z.0`、ProductVersion `x.y.z` |
 | 载荷是最新数据 | 查 `src/installer/payload/rime-data` | 配置/词库/Lua 与 `D:\RimeUser` 哈希一致 |
 | 资产哈希 | 下载回来重算 vs `SHA256SUMS.txt` | 一致 |
+| **两分支一致** | `git rev-parse master` vs `git rev-parse snapshot` | 相同（合并后） |
 | 标签指向真实提交 | `git ls-remote --tags origin` | 每个版本各自的 SHA，不是同一个 |
 | Latest | `gh release list` | 新版本标 `Latest` |
 | README/词表 | `docs/CUSTOM-WORDS.md` 重生成 | 与词条文件一致 |
@@ -117,14 +145,17 @@ description: Use when maintaining the Color-P GitHub repository — committing, 
 5. `gh release upload <上一版> <exe> SHA256SUMS.txt --clobber`
 6. `CHANGELOG.md`：删除被回滚版本的段落，把有效内容并入上一版
 7. `README.md`：版本表与下载文件名改回
-8. 提交推送（回滚属于用户明确要求，可以同步）
+8. 提交推送到 `snapshot`，再 `git checkout master` + `git merge --ff-only snapshot` + `git push --force-with-lease`
+   （回滚会让 master 后退，必须用 force；先确认远端 master 就是被回滚的那个提交）
 9. 在回复里提示：**上一版资产哈希已变**，已下载的人会对不上
 
 ## 本项目的具体坐标
 
 | 项 | 值 |
 |---|---|
-| 仓库 | `TangSong777/Color-P`（master） |
+| 仓库 | `TangSong777/Color-P` |
+| 工作分支 | `snapshot`（默认工作分支，日常提交推送） |
+| 稳定分支 | `master`（只做 fast-forward 合并，默认分支） |
 | 本地仓库 | `D:\Rime`（同时是小狼毫安装目录） |
 | 实时配置 | `D:\RimeUser` |
 | 安装器 | `src\installer\Color-P.iss` + `build-installer.ps1` |
@@ -145,6 +176,13 @@ gh release create <版本> <exe> SHA256SUMS.txt --repo TangSong777/Color-P `
 
 # 替换资产
 gh release upload <版本> <exe> SHA256SUMS.txt --repo TangSong777/Color-P --clobber
+
+# 例行的 snapshot 提交
+git add -A && git commit -m "<一句话>" && git push
+
+# 发版时合并（只允许快进）
+git checkout master && git merge --ff-only snapshot && git push
+git checkout snapshot
 ```
 
 ## 已知坑（都踩过）
@@ -160,11 +198,16 @@ gh release upload <版本> <exe> SHA256SUMS.txt --repo TangSong777/Color-P --clo
 6. **`.cmd` 必须纯 ASCII + CRLF**；含中文的 `.ps1` 需要 UTF-8 BOM。
 7. **打包前核对 `dist` 与已部署二进制哈希**：不一致会产出与线上不同的包。
 8. **payload 不提交**（`.gitignore`），每次打包现场从 `D:\RimeUser` 暂存；确认不含 `userdb` / `sync` / `installation.yaml`。
+9. **不要用普通 merge 合并 master**：必须是 `--ff-only`。普通 merge 会产生合并提交，
+   master 从此与 snapshot 分叉，「内容永远等于某个 snapshot 提交」的保证就没了。
+10. **发版后记得切回 snapshot**：留在 master 上继续改，下次提交就会污染稳定分支。
 
 ## 交付前的自检问句
 
+- 当前分支是 `snapshot` 吗？（不是就先切回来）
 - 用户这次说「改内容」还是「更新版本」？
 - 这次改动是否已经追加到 `PENDING-CHANGES.md`？
-- 如果只是改内容：我有没有误提交、误推送、误升版本？
+- 如果只是改内容：我有没有误碰 master、误 bump 版本、误打 tag？
 - 如果是发版：账本是否**从头到尾**读过？每条都进发布说明了吗？
+- 合并用的是 `--ff-only` 吗？master 与 snapshot 的 SHA 一致吗？
 - 标签、资产哈希、Latest 三项都核过了吗？

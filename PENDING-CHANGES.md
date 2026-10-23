@@ -28,6 +28,19 @@
 - **影响**：纯文档；不影响安装包内容与版本号
 
 ---
+## 2026-10-23 — 改用 snapshot 分支模型
+
+- **类型**：流程
+- **内容**：新增 `snapshot` 工作分支，日常改动提交推送至此；`master` 只接受
+  `git merge --ff-only snapshot`，保持为稳定版且内容永远等于某个 snapshot 提交。
+  明确「提交 ≠ 发布」：提交只进 snapshot，只有「更新版本」才动 master / 版本号 / tag / Release。
+  发版顺序调整为「bump → 打包验证 → 才合并 master → 才打 tag」，打包失败不污染稳定版
+- **文件**：`.dsh/skills/github-release-discipline/SKILL.md`（含用户级副本）、`README.md`
+- **验证**：snapshot 分支已建立并推送（起点 `9d7eeab` = 当时 master）；
+  两份 skill 哈希一致；README 新增「分支模型」小节、锚点全部有效、代码块配对
+- **影响**：流程变更；不改版本号、不影响安装包
+
+---
 ## 发版时怎么用这份账本
 
 1. 从上到下读完所有条目（不要只读最近的）

@@ -28,7 +28,7 @@ Color-P 是一个个人定制的 Windows 中文输入法发行版：以 [Weasel 
 | 排查「为什么不出候选」 | [已知限制](#已知限制) |
 | 自己编译、跑测试 | [构建与测试](#构建与测试) |
 | 了解实现原理 | [实现要点](#实现要点) |
-| 发一个版本 | [版本与发布](#版本与发布) |
+| 了解分支模型 / 发一个版本 | [版本与发布](#版本与发布) |
 
 **全部章节**
 
@@ -651,7 +651,23 @@ import_tables:
 
 版本号与上游小狼毫版本解耦：上游 `0.17.4` 只决定安装目录与内嵌的官方安装器。
 
-**版本号只在维护者明确指令后更新。** 日常改动只改本地并部署验证，不提交、不推送、不升版本、不打标签、不重建发布包；改动先累积，等指令再统一定稿。
+### 分支模型
+
+仓库用两个分支，把**开发中的代码**和**稳定版**分开：
+
+```
+snapshot ──► master ──► tag + Release
+（工作分支）  （只做合并）    （发版产物）
+```
+
+| 分支 | 角色 | 更新方式 |
+|---|---|---|
+| `snapshot` | 跟随本地的工作分支，日常改动都提交到这里 | 每完成一件事提交一次，自动推送 |
+| `master` | 稳定版，内容永远等于某个 `snapshot` 提交 | 只在发版时 `git merge --ff-only snapshot` |
+
+**`master` 永不直接提交**，只接受快进合并。默认分支保持 `master`，所以访客 clone 或浏览时看到的永远是稳定版；想看最新进展请切到 `snapshot`。
+
+**提交 ≠ 发布**：日常提交只进 `snapshot`，只有「更新版本」才会动 `master`、改版本号、打 tag、发 Release。
 
 ### 版本规则
 
@@ -680,20 +696,32 @@ import_tables:
 ### 发布流程
 
 ```powershell
-# 1. 读账本汇总，写入 CHANGELOG.md
+# ── 日常：提交到 snapshot ──
+git add -A && git commit -m "<一句话>" && git push
+
+# ── 发版：全程在 snapshot 上 ──
+# 1. 读 PENDING-CHANGES.md 汇总，写入 CHANGELOG.md
 # 2. 改版本号（两处，必须一致）
 #    src\installer\Color-P.iss        -> MyAppVersion / MyAppVersionQuad
 #    src\installer\build-installer.ps1 -> $PackageVersion
-# 3. 打包
+# 3. 清空账本，提交推送
+git add -A && git commit -m "发布 <版本>" && git push
+# 4. 打包并核对（版本资源、载荷哈希）
 pwsh -File .\src\installer\build-installer.ps1
-# 4. 打标签并发布
-git tag <版本> && git push origin <版本>
+# 5. 合并到 master（只允许快进）
+git checkout master && git merge --ff-only snapshot && git push
+# 6. 在 master 上打标签并发布
+git tag -a <版本> -m "Color-P <版本>" && git push origin <版本>
 gh release create <版本> .\src\installer\output\Color-P-Setup-<版本>.exe `
     .\src\installer\output\SHA256SUMS.txt `
     --title "Color-P <版本>" --notes-file RELEASE-NOTES.md --latest
+# 7. 切回 snapshot 继续工作
+git checkout snapshot
 ```
 
 安装包文件名固定为 `Color-P-Setup-<版本>.exe`，附带 `SHA256SUMS.txt`。
+
+> 打包与验证在**合并之前**完成。若打包失败，`master` 与 tag 都不会被污染 —— 稳定版永远指向一个真的能出包的提交。
 
 ## 致谢与许可
 
