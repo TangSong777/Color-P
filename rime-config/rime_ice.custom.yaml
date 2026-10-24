@@ -99,6 +99,8 @@ patch:
   engine/filters/+:
     - lua_filter@*dash_filter
     - lua_filter@*dedupe_filter
+    # 英文候选的大小写双份：GitHub 之后紧跟 github。必须排在去重之后。
+    - lua_filter@*lowercase_candidate_filter
 
   # 预编辑里把占位符 vvv 显示成连字符（与 dash_filter 对应）
   translator/preedit_format/+:

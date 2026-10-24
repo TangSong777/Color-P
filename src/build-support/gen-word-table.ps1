@@ -1,4 +1,4 @@
-﻿# 生成「自定义字词总表」(docs/CUSTOM-WORDS.md)。
+# 生成「自定义字词总表」(docs/CUSTOM-WORDS.md)。
 #
 # 数据来源（唯一事实来源，不手工抄写）：
 #   custom_phrase.txt        —— 英文白名单 + 中文短码
@@ -37,7 +37,7 @@ $categories = [ordered]@{
                  'Multisim','SolidWorks','AutoCAD','STM32CubeMX','STM32CubeIDE','Keil',
                  'Arduino','PlatformIO','Blender','Chrome','Geek','Flash','OBS',
                  'PowerPoint','Excel','Word','XMind','Obsidian','Notion')
-  '工具/其他' = @('Listary','PixPin','ZeroTier','Wallpaper','Desktop','Patina','README','WorkSpace')
+  '工具/其他' = @('Listary','PixPin','ZeroTier','Wallpaper','Desktop','Patina','README','WorkSpace','Sunshine','Moonlight','ffmpeg')
 }
 
 function Get-Category([string]$word) {

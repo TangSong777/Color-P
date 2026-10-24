@@ -41,6 +41,23 @@
 - **影响**：流程变更；不改版本号、不影响安装包
 
 ---
+## 2026-10-24 — 英文白名单 +3 词与大小写双份候选
+
+- **类型**：新增
+- **内容**：
+  ① 白名单 80 → **83**：`Sunshine`、`Moonlight`、`ffmpeg`（编码为对应小写）
+  ② 新增 `lua/lowercase_candidate_filter.lua`：纯字母的英文候选后紧跟一个全小写版本
+  （`github` → `GitHub | github`、`githu` 补全 → `GitHub | github`）。
+  只处理纯 ASCII 字母，型号（ESP32）、中英混排（X光）、本就全小写的词（ffmpeg）不生成影子候选
+- **文件**：`custom_phrase.txt`、`mixed_tokens.dict.yaml`、`lua/lowercase_candidate_filter.lua`、
+  `rime_ice.custom.yaml`（`engine/filters/+` 注册，排在 dedupe 之后）、
+  `docs/CUSTOM-WORDS.md`、`README.md`、`gen-word-table.ps1`（分类表）
+- **验证**：`github` → GitHub|github、`vscode` → VSCode|vscode、`v` → Vim|vim|VisualStudio|visualstudio；
+  `githu` → GitHub ~b | github ~b；`ffmpeg` 仅一条；`esp32`/`X光`/`sj` 不受影响；
+  选词正常（`ni1`→你、`ni5`→拟、`github1`→GitHub）；造句 `chatgptqishi…` → ChatGPT其实也就那样
+- **影响**：需重新部署；英文候选数量翻倍（预期行为）；未改版本号
+
+---
 ## 发版时怎么用这份账本
 
 1. 从上到下读完所有条目（不要只读最近的）

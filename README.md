@@ -136,13 +136,33 @@ arduinoqishiyejiunayang              →  Arduino其实也就那样
 |---|---|---|
 | 纯英文单词 | `table_translator@melt_eng` | 已移除。`hello` → 合理了哦，不出英文 |
 | 中英混排词 | `table_translator@cn_en` | 保留。词库 1001 条全部含中文（`X光`、`T恤`、`红Buff`） |
-| 指定名词 | `custom_phrase` + `custom_phrase_complete` | 80 个白名单词，精确命中 + 前缀补全 |
+| 指定名词 | `custom_phrase` + `custom_phrase_complete` | 83 个白名单词，精确命中 + 前缀补全 |
 
 白名单为科技厂商、开发工具、语言与常用软件，按规范大小写写入，**用小写编码输入**。完整清单（编码、分类、是否参与造句）见 **[自定义字词总表](docs/CUSTOM-WORDS.md)**。
 
 编码遵循两条约束：不含空格（`visualstudio`、`platformio`）；含数字的词去掉数字作编码（`stmcubemx`），因为主键盘数字是选词键。
 
 前缀补全拆成两个翻译器，是为了避免高权重补全挤占单字母输入：`custom_phrase` 权重 99、关闭补全，负责精确码；`custom_phrase_complete` 权重 0.9、开启补全，负责 `chat` → `ChatGPT`。
+
+#### 大小写双份
+
+每个纯字母的英文候选，后面会紧跟一个**全小写**版本，方便写代码或填表单时直接选：
+
+```
+github  →  GitHub | github
+vscode  →  VSCode | vscode
+chatgpt →  ChatGPT | chatgpt
+githu   →  GitHub（补全）| github（补全）
+```
+
+由 `lua/lowercase_candidate_filter.lua` 实现，只处理**纯 ASCII 字母**：
+
+| 候选 | 是否生成小写版本 |
+|---|---|
+| `GitHub`、`VSCode`、`ChatGPT` | ✅ |
+| `ESP32`、`STM32`（含数字） | ❌ 型号不生成影子候选 |
+| `X光`（含中文） | ❌ |
+| `ffmpeg`（本来就全小写） | ❌ 不重复 |
 
 ### 计算器
 
@@ -282,6 +302,7 @@ zuogeDNAjiance               →  做个DNA检测（大写造词）
 | `lua/keypad_input.lua` | 小键盘与数字混合输入处理器 |
 | `lua/dash_filter.lua` | 把占位词条 `DASH`/`USCORE` 还原成候选文本 |
 | `lua/dedupe_filter.lua` | 合并「文本与注释都相同」的重复候选 |
+| `lua/lowercase_candidate_filter.lua` | 英文候选后追加全小写版本 |
 
 ### 白名单与词条
 

@@ -132,3 +132,6 @@ Markdown	markdown
 Bug	bug
 Codex	codex
 WorkSpace	workspace
+Sunshine	sunshine
+Moonlight	moonlight
+ffmpeg	ffmpeg
