@@ -377,6 +377,25 @@ function keypad_input.func(key, env)
   if not key:release() then env.shift_armed = false end
   if key:release() then return 2 end
   if context.get_option and context:get_option("ascii_mode") then return 2 end
+  -- 连按两下单引号：把当前输入串原样上屏，效果等同 Enter 的 commit_raw_input。
+  -- 单个 ' 仍是拼音音节分隔符（ni'hao 靠它手动分词），只有连续第二个才提交，
+  -- 因此既保留了分词，又多了一个不用按 Enter 的原样提交方式：
+  --   hello''  -> 上屏 hello
+  --   esp32''  -> 上屏 esp32
+  --   ni'hao   -> 仍然只是分词，不出候选外的副作用
+  if key_repr == "apostrophe" and context:is_composing() then
+    local current = context.input or ""
+    if current:sub(-1) == "'" then
+      local raw = current:sub(1, -2) .. (env.tail or "")
+      env.clear_virtual_state()
+      context:clear()
+      if raw ~= "" then
+        env.engine:commit_text(raw)
+        remember_commit(env, raw)
+      end
+      return 1
+    end
+  end
   -- 计算器模式：input 以 cC 开头时，把数字与小键盘运算符送进真实输入串，
   -- 交给 lua_translator@*calc_translator 求值。其它模式下这些键的行为完全不变。
   local calc_input = context.input or ""

@@ -386,8 +386,17 @@ void WeaselTSF::_SetCompositionPosition(const RECT& rc, const RECT& caret) {
     _fCUASWorkaroundTested = TRUE;
     if (rc.top == rc.bottom) {
       _fCUASWorkaroundEnabled = TRUE;
-      return;
     }
+  }
+  // CUAS 宿主（IMM32 应用，例如 Delphi 写的 Geek Uninstaller）不提供组合矩形。
+  // 原先在这里直接 return，导致 _positionValid 永远为 false，候选窗永远不会显示；
+  // 但按键仍经 CUAS 桥接送到 Rime，于是表现为「能打字、能选词，却看不到候选框」。
+  // 改用前台窗口的光标矩形兜底，让窗口至少出现在输入位置附近。
+  if (_fCUASWorkaroundEnabled && rc.top == rc.bottom) {
+    RECT fallback = {};
+    if (GetForegroundCaretRect(::GetForegroundWindow(), 20, fallback))
+      _cand->UpdateInputPosition(fallback);
+    return;
   }
   if (!_sentPositionValid || !EqualRect(&_lastSentPosition, &caret)) {
     m_client.UpdateInputPosition(caret);

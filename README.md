@@ -263,6 +263,7 @@ Color-P-Setup-0.1.4.exe /SILENT /NORESTART /SUPPRESSMSGBOXES
 | `Shift+-`（组合中） | 输入单个 `_`（ASCII），参与造句 |
 | `Shift+-`（未组合） | 输出中文标点 `——` |
 | `Enter` | 提交原始拼写（混合态为字母 + 数字 + 符号） |
+| `'`（连按两下单引号） | 同上，原样上屏当前输入，不用按 `Enter` |
 | `BackSpace` / `Shift+BackSpace` / `Ctrl+BackSpace` | 删字符 / 删音节 / 清空候选框 |
 | 小键盘 `KP_0`–`KP_9` | 输入数字，参与拼写与造句 |
 | 小键盘 `+ - * /` | 按原义进入输入串 |
@@ -284,6 +285,8 @@ chat                         →  ChatGPT（前缀补全）
 markdownqishiyejiunayang     →  Markdown其实也就那样
 cC 1 0 0 / 4                 →  100/4=25.0（小键盘）
 zuogeDNAjiance               →  做个DNA检测（大写造词）
+hello'                      →  hello（连按两下单引号，原样上屏）
+esp32'                      →  esp32（同上，不用按 Enter）
 ```
 
 ## 配置与词条
@@ -439,6 +442,7 @@ pwsh -File .\src\build-support\gen-word-table.ps1 `
 | 英文必须小写输入 | 大写走「大写字母造词」通道 |
 | 以词定字（`[` `]`）不可用 | 未保留 `select_character`，`[` `]` 归标点 |
 | 计算器只认小键盘 | 主键盘数字始终是选词键；只在 `cC` 模式下放行小键盘数字与运算符 |
+| 单个 `'` 仍是拼音分隔符（`ni'hao`） | 连按两下才触发原样上屏，避免破坏手动分词 |
 
 ### 候选位占用
 

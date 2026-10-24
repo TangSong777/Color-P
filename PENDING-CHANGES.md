@@ -58,6 +58,37 @@
 - **影响**：需重新部署；英文候选数量翻倍（预期行为）；未改版本号
 
 ---
+## 2026-10-24 — 双单引号原样上屏
+
+- **类型**：新增
+- **内容**：连按两下单引号（`''`）把当前输入串原样上屏，效果等同 `Enter` 的
+  `commit_raw_input`：`hello''` → `hello`、`esp32''` → `esp32`。
+  单个 `'` 仍是拼音音节分隔符（`ni'hao` → 你好、`xi'an` → 西安），不受影响
+- **文件**：`lua/keypad_input.lua`、`README.md`（按键总表、输入示例、已知限制）
+- **验证**：`hello''`/`github''`/`nihao''`/`esp{KP_3}{KP_2}''` 均原样上屏；
+  `ni'hao`/`xi'an` 分词正常；`Enter` 行为未变；`nihao`/`ni1`/`woshi`+KP4 回归正常
+- **影响**：需重新部署；未改版本号
+
+---
+
+## 2026-10-24 — 宿主兼容：候选窗不显示的定位与修复
+
+- **类型**：修复
+- **内容**：Geek Uninstaller 搜索栏里能打字、能选词，但候选窗不显示。经提权监控确认
+  该宿主是**正常 64 位 TSF 路径**（`weasel.dll`/`msctf.dll` 均已加载），
+  `Show` 诊断日志显示 20 次 `show=1 composing=1 kbDisabled=0` 但 **`posValid=0`**
+  —— 宿主不提供 `TfContextView`，`_SetCompositionPosition` 从未被调用，位置永远无效。
+  三处修改：① CUAS 分支不再直接 return，改用 `GetForegroundCaretRect` 兜底定位；
+  ② `_ShowUI` 从「无条件隐藏」改为「组合活跃且非抑制期才显示」（避免某些宿主在
+  doc focus 变化时把窗口藏掉后不再重绘）；③ `CCandidateList::Show` 加开关式诊断日志
+  （`WEASEL_SHOW_LOG=1` 时写 `%TEMP%\weasel-show.log`）
+- **文件**：`src/WeaselTSF/Composition.cpp`、`CandidateList.cpp`、`CandidateList.h`
+- **验证**：编译 x64/x86 通过；host-regression / panel-bench / SSF 237 项通过；
+  诊断日志成功定位到 `posValid=0` 这一根因
+- **影响**：已部署（System32 `1C75FEC53D1D`、SysWOW64 `1585470CE7ED`）；
+  **Geek 的候选窗仍未显示**，宿主侧未提供文本布局信息，兜底定位未生效，暂不继续追
+
+---
 ## 发版时怎么用这份账本
 
 1. 从上到下读完所有条目（不要只读最近的）

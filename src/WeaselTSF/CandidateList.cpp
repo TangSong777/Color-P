@@ -4,6 +4,7 @@
 #include "CandidateList.h"
 #include <KeyEvent.h>
 #include <math.h>
+#include <cstdio>
 
 using namespace std;
 using namespace weasel;
@@ -79,6 +80,31 @@ STDMETHODIMP CCandidateList::GetGUID(GUID* pguid) {
 }
 
 STDMETHODIMP CCandidateList::Show(BOOL showCandidateWindow) {
+  // 诊断开关：设置环境变量 WEASEL_SHOW_LOG=1 时，把每次 Show 的决策条件
+  // 追加写到 %TEMP%\weasel-show.log，用于排查「宿主里看不到候选窗」。
+  static const bool log_enabled = [] {
+    wchar_t buf[8] = {};
+    return ::GetEnvironmentVariableW(L"WEASEL_SHOW_LOG", buf, 8) > 0;
+  }();
+  if (log_enabled) {
+    wchar_t path[MAX_PATH] = {};
+    if (::GetTempPathW(MAX_PATH, path)) {
+      wcscat_s(path, L"weasel-show.log");
+      if (FILE* f = nullptr; _wfopen_s(&f, path, L"a") == 0 && f) {
+        SYSTEMTIME st = {};
+        ::GetLocalTime(&st);
+        std::fprintf(f,
+                     "%02d:%02d:%02d pid=%lu show=%d posValid=%d uiStarted=%d "
+                     "nativeForced=%d composing=%d kbDisabled=%d\n",
+                     st.wHour, st.wMinute, st.wSecond, ::GetCurrentProcessId(),
+                     showCandidateWindow ? 1 : 0, _positionValid ? 1 : 0,
+                     _uiStarted ? 1 : 0, _nativeForced ? 1 : 0,
+                     _ui->status().composing ? 1 : 0,
+                     _tsf->_IsKeyboardDisabled() ? 1 : 0);
+        std::fclose(f);
+      }
+    }
+  }
   if (showCandidateWindow && _positionValid && !_tsf->_IsKeyboardDisabled()) {
     // The native popup is destroyed -- but the decoded skin, fonts and
     // DirectWrite resources are kept -- whenever the user leaves Weasel or a
@@ -491,10 +517,15 @@ void WeaselTSF::_EndUI() {
 }
 
 void WeaselTSF::_ShowUI() {
-  // 焦点回来时不再“恢复”候选窗。窗口里的内容属于上一次输入，
-  // 而组合同样可能已经终止；真正的显示只由服务端的 UpdateUI 触发
-  //（且 UpdateUI 会丢弃组合已终止时的陈旧响应）。
-  _cand->Show(FALSE);
+  // 焦点回来时：组合仍然活跃就恢复显示，否则保持隐藏。
+  // 抑制期（刚终止组合、结束事务尚未完成）内一律不显示，这是消除「幽灵候选」的关键；
+  // 但某些宿主（如 Geek Uninstaller）在输入过程中会触发 doc focus 变化，
+  // 若在这里无条件隐藏，候选窗会被藏起来且不再重绘 —— 表现为「能打字但看不到候选」。
+  if (!_IsComposing() || IsUISuppressed() || !_cand->HasContext()) {
+    _cand->Show(FALSE);
+    return;
+  }
+  _cand->Show(TRUE);
 }
 
 void WeaselTSF::_HideUI() {
