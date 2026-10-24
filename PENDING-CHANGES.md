@@ -58,18 +58,6 @@
 - **影响**：需重新部署；英文候选数量翻倍（预期行为）；未改版本号
 
 ---
-## 2026-10-24 — 双单引号原样上屏
-
-- **类型**：新增
-- **内容**：连按两下单引号（`''`）把当前输入串原样上屏，效果等同 `Enter` 的
-  `commit_raw_input`：`hello''` → `hello`、`esp32''` → `esp32`。
-  单个 `'` 仍是拼音音节分隔符（`ni'hao` → 你好、`xi'an` → 西安），不受影响
-- **文件**：`lua/keypad_input.lua`、`README.md`（按键总表、输入示例、已知限制）
-- **验证**：`hello''`/`github''`/`nihao''`/`esp{KP_3}{KP_2}''` 均原样上屏；
-  `ni'hao`/`xi'an` 分词正常；`Enter` 行为未变；`nihao`/`ni1`/`woshi`+KP4 回归正常
-- **影响**：需重新部署；未改版本号
-
----
 
 ## 2026-10-24 — 宿主兼容：候选窗不显示的定位与修复
 
@@ -87,6 +75,21 @@
   诊断日志成功定位到 `posValid=0` 这一根因
 - **影响**：已部署（System32 `1C75FEC53D1D`、SysWOW64 `1585470CE7ED`）；
   **Geek 的候选窗仍未显示**，宿主侧未提供文本布局信息，兜底定位未生效，暂不继续追
+
+---
+## 2026-10-24 — Shift+Enter 与 Enter 一致（去掉自动分隔符）
+
+- **类型**：修复
+- **内容**：`Shift+Enter` 此前没有绑定，落到 Rime 默认路径，会把输入串连同自动插入的
+  音节分隔符一起上屏（`nihaowoshiyanghanlin` → `ni'hao'wo'shi'yanghanlin`）。
+  在 `key_binder/bindings` 增加 `{accept: "Shift+Return", send: Return, when: composing}`，
+  让它走 `commit_raw_input`，与 `Enter` 完全一致。手动输入的 `'`（如 `xi'an`）仍保留
+- **文件**：`rime_ice.custom.yaml`（`key_binder/bindings`）、`README.md`
+  （按键总表、输入示例、已知限制）；同时回滚上一轮误加的「双单引号上屏」
+- **验证**：`nihaowoshiyanghanlin{Shift+Return}` → `nihaowoshiyanghanlin`（无分隔符）；
+  `nihao{Shift+Return}` → `nihao`；`esp32{Shift+Return}` → `esp32`；
+  与 `{Return}` 结果完全一致；`nihao{space}` → 你好、`ni1` → 你 回归正常
+- **影响**：需重新部署；未改版本号
 
 ---
 ## 发版时怎么用这份账本

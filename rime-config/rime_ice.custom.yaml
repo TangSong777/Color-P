@@ -23,6 +23,10 @@ patch:
     - {accept: Tab, send: "Shift+Right", when: composing}
     - {accept: "Alt+Left", send: "Shift+Left", when: composing}
     - {accept: "Alt+Right", send: "Shift+Right", when: composing}
+    # Shift+Enter 与 Enter 一致：都走 commit_raw_input（上屏原始输入，不含 Rime
+    # 自动插入的音节分隔符）。不绑定时 Shift+Enter 会落到默认路径，把
+    # ni'hao'wo'shi 这种带分隔符的串原样上屏。
+    - {accept: "Shift+Return", send: Return, when: composing}
     - {accept: minus, send: Page_Up, when: has_menu}
     - {accept: equal, send: Page_Down, when: has_menu}
     - {accept: "Control+Shift+3", toggle: ascii_punct, when: always}
