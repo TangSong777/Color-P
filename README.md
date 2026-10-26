@@ -274,6 +274,19 @@ Color-P-Setup-0.1.4.exe /SILENT /NORESTART /SUPPRESSMSGBOXES
 
 英文词条**必须小写输入**：大写走方案的「大写字母造词」通道（`zuogeDNAjiance` → 做个DNA检测）。
 
+### 误触纠正
+
+手快把声母韵母打反时自动纠正：`u` 后面紧跟 `j/q/x/y` 会交换成 `qu/ju/xu/yu`。
+拼音里 `uj/uq/ux/uy` 都不是合法音节，所以这个组合只可能是打反了：
+
+```
+uqnali  →  qu'na'li  →  去哪里
+uq      →  qu        →  去 | 取 | 区
+uy      →  yu        →  与 | 于 | 语
+```
+
+单独输入 `u`（中文短码「有/又/由」）不受影响，因为要求紧接着的键是 `j/q/x/y`。
+
 ### 输入示例
 
 ```
