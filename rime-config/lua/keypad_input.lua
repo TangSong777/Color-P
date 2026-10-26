@@ -379,19 +379,7 @@ function keypad_input.func(key, env)
   if not key:release() then env.shift_armed = false end
   if key:release() then return 2 end
   if context.get_option and context:get_option("ascii_mode") then return 2 end
-  -- 误触纠正：已经打了 u，接着按下 j/q/x/y 时，交换成 qu/ju/xu/yu。
-  -- 拼音里 uj/uq/ux/uy 都不是合法音节，所以这个组合只可能是手快打反了；
-  -- 交换后就能正常参与分词与造句：
-  --   uqnali  ->  qunali  ->  去那里
-  -- 单独输入 u（中文短码「有/又/由」）不受影响，因为要求紧接着的键是 j/q/x/y。
-  do
-    local bare_letter = key_repr:match("^([A-Za-z])$")
-    local current = context.input or ""
-    if bare_letter and current == "u" and bare_letter:match("^[jqxy]$") then
-      env.edit_raw(bare_letter .. "u", 2)
-      return 1
-    end
-  end
+
   -- 计算器模式：input 以 cC 开头时，把数字与小键盘运算符送进真实输入串，
   -- 交给 lua_translator@*calc_translator 求值。其它模式下这些键的行为完全不变。
   local calc_input = context.input or ""

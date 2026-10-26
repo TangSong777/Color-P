@@ -173,6 +173,22 @@
 - **影响**：需重新部署；custom.yaml 回到 13 个 patch；未改版本号
 
 ---
+## 2026-10-27 — 启用模糊音纠错，移除 uq→qu 交换
+
+- **类型**：变更
+- **内容**：① 启用 8 条模糊音（平翘舌 zh/z、ch/c、sh/s + 前后鼻音 an/ang、en/eng、in/ing），
+  实现错音自动纠正；② 移除 `keypad_input.lua` 里 `u` + 声母 的交换逻辑
+  （`uq → qu`），统一由模糊音承担纠错
+- **文件**：`rime_ice.custom.yaml`（`speller/algebra/+` 8 条）、`lua/keypad_input.lua`、
+  `README.md`（「误触纠正」改写为「错音纠正」）
+- **验证**：`zongguo` → 中国、`senme` → 什么、`sijian` → 时间、`zidao` → 知道、
+  `jintain` → 今天、`penyou` → 朋友、`yinyu` → 英语；
+  `uq`/`uqnali` 恢复无候选；`kaol` → 考虑、`kaolv` → 考虑、`zhongguo`/`nihao`/
+  `shijian` 不受影响；选词、`-` 造句、英文补全、计算器正常；
+  Lua 100 项、SSF 237 项、panel-bench、host-regression 通过
+- **影响**：需重新部署；custom.yaml 14 个 patch；未改版本号
+
+---
 ## 发版时怎么用这份账本
 
 1. 从上到下读完所有条目（不要只读最近的）
