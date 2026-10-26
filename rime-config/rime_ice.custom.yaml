@@ -68,6 +68,7 @@ patch:
   # 触发码不受影响。
   date_translator/timestamp: ""
 
+
   # 前缀补全：拆成两层，避免单字母输入被英文占满。
   #
   #   精确码（chatgpt）→ custom_phrase        initial_quality 99 → 稳定首位
@@ -103,6 +104,8 @@ patch:
   engine/filters/+:
     - lua_filter@*dash_filter
     - lua_filter@*dedupe_filter
+    # 抑制单字母前缀补全（u -> Ubuntu、i -> Intel），避免误触后整句被英文吃掉。
+    - lua_filter@*short_prefix_filter
     # 英文候选的大小写双份：GitHub 之后紧跟 github。必须排在去重之后。
     - lua_filter@*lowercase_candidate_filter
 

@@ -92,6 +92,26 @@
 - **影响**：需重新部署；未改版本号
 
 ---
+## 2026-10-26 — 抑制误触单字母触发英文补全
+
+- **类型**：修复
+- **内容**：误触 `u` / `i` 会让整句被英文吃掉（`uqnali` → `Ubuntu去哪里`，
+  本意 `qunali` → 去那里）。根因是 `u` 是 `ubuntu` 的**合法首音节**，
+  参与造句后成为该输入串的唯一解析，降权无效。处理：
+  ① `gen-mixed-tokens.ps1` 跳过首字母为元音（a/e/i/o/u/v）的英文词，
+  这些词**不参与造句**，只保留精确码与前缀补全（`ubuntu` / `ubun` 仍出 Ubuntu）；
+  ② 新增 `lua/short_prefix_filter.lua`，单字母音节下丢弃开头有 ≥2 个英文字母的候选
+  （`u` → Ubuntu、`i` → Intel 不再出现；`x` → X光 保留）
+- **文件**：`src/build-support/gen-mixed-tokens.ps1`、`mixed_tokens.dict.yaml`、
+  `lua/short_prefix_filter.lua`、`rime_ice.custom.yaml`（`engine/filters/+`）、
+  `docs/CUSTOM-WORDS.md`、`README.md`（已知限制）
+- **验证**：`uqnali`/`iqnali` 不再出英文；`u` → 有/又/由、`i` → 一/以/已；
+  `ubuntu`/`ubun`/`intel`/`vscode`/`vscod` 精确码与补全完好；
+  `chat`/`githu`/`markdow` 补全正常；`qunali` → 去哪里、`nihao` → 你好 回归正常。
+  **代价**：这 18 个词不再参与造句（`ubuntuhqishi…` 不再出「Ubuntu其实也就那样」）
+- **影响**：需重新部署；mixed_tokens 由 85 条减为 70 条；未改版本号
+
+---
 ## 发版时怎么用这份账本
 
 1. 从上到下读完所有条目（不要只读最近的）

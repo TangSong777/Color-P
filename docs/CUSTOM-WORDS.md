@@ -2,7 +2,7 @@
 
 > 本文件由 `src/build-support/gen-word-table.ps1` 从实际词条文件生成，**请勿手工编辑**。
 >
-> 生成时间：2026-10-24 15:54
+> 生成时间：2026-10-26 23:25
 
 ## 概览
 
@@ -22,7 +22,7 @@
 | # | 词条 | 编码 | 分类 | 参与造句 |
 |---:|---|---|---|:---:|
 | 1 | Bug | `bug` | 其他 | ✅ |
-| 2 | Anthropic | `anthropic` | AI/模型 | ✅ |
+| 2 | Anthropic | `anthropic` | AI/模型 | — |
 | 3 | ChatGPT | `chatgpt` | AI/模型 | ✅ |
 | 4 | Claude | `claude` | AI/模型 | ✅ |
 | 5 | Codex | `codex` | AI/模型 | ✅ |
@@ -31,31 +31,31 @@
 | 8 | Gemini | `gemini` | AI/模型 | ✅ |
 | 9 | Grok | `grok` | AI/模型 | ✅ |
 | 10 | Kimi | `kimi` | AI/模型 | ✅ |
-| 11 | OpenAI | `openai` | AI/模型 | ✅ |
-| 12 | OpenCode | `opencode` | AI/模型 | ✅ |
+| 11 | OpenAI | `openai` | AI/模型 | — |
+| 12 | OpenCode | `opencode` | AI/模型 | — |
 | 13 | prompt | `prompt` | AI/模型 | ✅ |
 | 14 | Qwen | `qwen` | AI/模型 | ✅ |
-| 15 | AMD | `amd` | 厂商/平台 | ✅ |
+| 15 | AMD | `amd` | 厂商/平台 | — |
 | 16 | Debian | `debian` | 厂商/平台 | ✅ |
 | 17 | Docker | `docker` | 厂商/平台 | ✅ |
 | 18 | GitHub | `github` | 厂商/平台 | ✅ |
 | 19 | GitLab | `gitlab` | 厂商/平台 | ✅ |
 | 20 | Google | `google` | 厂商/平台 | ✅ |
-| 21 | Intel | `intel` | 厂商/平台 | ✅ |
+| 21 | Intel | `intel` | 厂商/平台 | — |
 | 22 | Linux | `linux` | 厂商/平台 | ✅ |
 | 23 | MicroSoft | `microsoft` | 厂商/平台 | ✅ |
 | 24 | NVIDIA | `nvidia` | 厂商/平台 | ✅ |
 | 25 | PowerShell | `powershell` | 厂商/平台 | ✅ |
-| 26 | Ubuntu | `ubuntu` | 厂商/平台 | ✅ |
-| 27 | Vim | `vim` | 厂商/平台 | ✅ |
-| 28 | VMware | `vmware` | 厂商/平台 | ✅ |
-| 29 | VPN | `vpn` | 厂商/平台 | ✅ |
-| 30 | VSCode | `vscode` | 厂商/平台 | ✅ |
+| 26 | Ubuntu | `ubuntu` | 厂商/平台 | — |
+| 27 | Vim | `vim` | 厂商/平台 | — |
+| 28 | VMware | `vmware` | 厂商/平台 | — |
+| 29 | VPN | `vpn` | 厂商/平台 | — |
+| 30 | VSCode | `vscode` | 厂商/平台 | — |
 | 31 | Windows | `windows` | 厂商/平台 | ✅ |
 | 32 | WinScp | `winscp` | 厂商/平台 | ✅ |
 | 33 | Chinese | `chinese` | 语言/格式 | ✅ |
 | 34 | CPU | `cpu` | 语言/格式 | ✅ |
-| 35 | English | `english` | 语言/格式 | ✅ |
+| 35 | English | `english` | 语言/格式 | — |
 | 36 | GPU | `gpu` | 语言/格式 | ✅ |
 | 37 | HDMI | `hdmi` | 语言/格式 | ✅ |
 | 38 | Java | `java` | 语言/格式 | ✅ |
@@ -67,13 +67,13 @@
 | 44 | Rust | `rust` | 语言/格式 | ✅ |
 | 45 | SATA | `sata` | 语言/格式 | ✅ |
 | 46 | SSD | `ssd` | 语言/格式 | ✅ |
-| 47 | Arduino | `arduino` | 软件/游戏 | ✅ |
-| 48 | AutoCAD | `autocad` | 软件/游戏 | ✅ |
+| 47 | Arduino | `arduino` | 软件/游戏 | — |
+| 48 | AutoCAD | `autocad` | 软件/游戏 | — |
 | 49 | Blender | `blender` | 软件/游戏 | ✅ |
 | 50 | CDDA | `cdda` | 软件/游戏 | ✅ |
 | 51 | Chrome | `chrome` | 软件/游戏 | ✅ |
 | 52 | Clash | `clash` | 软件/游戏 | ✅ |
-| 53 | Excel | `excel` | 软件/游戏 | ✅ |
+| 53 | Excel | `excel` | 软件/游戏 | — |
 | 54 | Flash | `flash` | 软件/游戏 | ✅ |
 | 55 | Geek | `geek` | 软件/游戏 | ✅ |
 | 56 | Keil | `keil` | 软件/游戏 | ✅ |
@@ -81,16 +81,16 @@
 | 58 | Minecraft | `minecraft` | 软件/游戏 | ✅ |
 | 59 | Multisim | `multisim` | 软件/游戏 | ✅ |
 | 60 | Notion | `notion` | 软件/游戏 | ✅ |
-| 61 | OBS | `obs` | 软件/游戏 | ✅ |
-| 62 | Obsidian | `obsidian` | 软件/游戏 | ✅ |
+| 61 | OBS | `obs` | 软件/游戏 | — |
+| 62 | Obsidian | `obsidian` | 软件/游戏 | — |
 | 63 | PlatformIO | `platformio` | 软件/游戏 | ✅ |
 | 64 | PowerPoint | `powerpoint` | 软件/游戏 | ✅ |
 | 65 | PyCharm | `pycharm` | 软件/游戏 | ✅ |
 | 66 | SolidWorks | `solidworks` | 软件/游戏 | ✅ |
 | 67 | STM32CubeIDE | `stmcubeide` | 软件/游戏 | ✅ |
 | 68 | STM32CubeMX | `stmcubemx` | 软件/游戏 | ✅ |
-| 69 | Undertale | `undertale` | 软件/游戏 | ✅ |
-| 70 | VisualStudio | `visualstudio` | 软件/游戏 | ✅ |
+| 69 | Undertale | `undertale` | 软件/游戏 | — |
+| 70 | VisualStudio | `visualstudio` | 软件/游戏 | — |
 | 71 | Word | `word` | 软件/游戏 | ✅ |
 | 72 | XMind | `xmind` | 软件/游戏 | ✅ |
 | 73 | Desktop | `desktop` | 工具/其他 | ✅ |

@@ -1,4 +1,4 @@
-﻿# 生成 mixed_tokens.dict.yaml：把「英文白名单」变成可参与造句的词典词条。
+# 生成 mixed_tokens.dict.yaml：把「英文白名单」变成可参与造句的词典词条。
 #
 # 为什么需要：custom_phrase 里的条目只作为独立候选，**不参与 Rime 的造句**。
 # 想让 arduinoqishiyejiunayang 出「Arduino其实也就那样」，Arduino 必须是一条
@@ -55,7 +55,14 @@ foreach ($e in $extra) { [void]$sb.AppendLine("$($e[0])`t$($e[1])`t$($e[2])") }
 
 foreach ($line in $rows) {
   $p = $line -split "`t"
-  [void]$sb.AppendLine("$($p[0])`t$($p[1].ToLower())`t1000")
+  $code = $p[1].ToLower()
+  # 首字母能单独成音节的英文词（a/e/i/o/u/v 开头，如 Ubuntu / Intel / VSCode）
+  # **不写入 mixed_tokens**，只保留在 custom_phrase（精确码 + 前缀补全）。
+  # 原因：u 是 ubuntu 的合法首音节，误触 u 后整句会被接成「Ubuntu去哪里」
+  # （输入 uqnali，本意 qunali → 去那里）。这类词只要参与造句，无论权重多低，
+  # 都是该输入串的唯一解析，降权没用，只能让它不参与造句。
+  if ($code -match '^[aeiouv]') { continue }
+  [void]$sb.AppendLine("$($p[0])`t$code`t1000")
 }
 
 New-Item -ItemType Directory -Force -Path (Split-Path $Out -Parent) | Out-Null
