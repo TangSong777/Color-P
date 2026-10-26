@@ -59,6 +59,65 @@
 一次发布里混合了多种变更时，取**最高位**。例如「新特性 + 修 bug」→ 升 `MINOR`，
 `PATCH` 归零。
 
+## 0.1.5 — 2026-10-27
+
+**PATCH**：新增错音纠正与候选增强，修复 Shift+Enter 与宿主兼容问题。
+
+### 新增
+
+- **错音纠正（模糊音）**：启用 8 条 `speller/algebra` 规则，覆盖两类最常见错音
+  - 平翘舌：`zongguo` → 中国、`senme` → 什么、`sijian` → 时间
+  - 前后鼻音：`jintain` → 今天、`penyou` → 朋友、`yinyu` → 英语
+  - 变体本身是合法音节，**不污染分词**（`kaol` / `kaolv` 照常）
+- **大小写双份候选**：纯字母的英文候选后紧跟全小写版本
+  （`github` → `GitHub | github`、`vscode` → `VSCode | vscode`），
+  由 `lua/lowercase_candidate_filter.lua` 实现
+- **英文白名单 80 → 83**：`Sunshine`、`Moonlight`、`ffmpeg`
+- **单字母补全抑制**：`lua/short_prefix_filter.lua` 丢弃单字母音节接出的英文候选
+
+### 修复
+
+- **`Shift+Enter` 与 `Enter` 一致**：此前没有绑定，落到默认路径会把自动插入的
+  音节分隔符一起上屏（`nihaowoshiyanghanlin` → `ni'hao'wo'shi'yanghanlin`）。
+  现在走 `commit_raw_input`，上屏 `nihaowoshiyanghanlin`
+- **误触单字母触发英文补全**：`u` 是 `ubuntu` 的合法首音节，误触后整句被接成
+  「Ubuntu去哪里」。现在元音开头的英文词不参与造句，`uqnali` 不再出英文
+- **宿主兼容（候选窗定位）**：CUAS 宿主拿不到组合矩形时改用前台光标兜底；
+  `_ShowUI` 从「无条件隐藏」改为「组合活跃且非抑制期才显示」；
+  `CCandidateList::Show` 增加开关式诊断日志（`WEASEL_SHOW_LOG=1`）
+
+### 变更
+
+- **元音开头的英文词不再参与造句**（Ubuntu / Intel / VSCode / Vim / OpenAI 等 18 个）：
+  这是消除「误触 u 毁整句」的代价。**精确码与前缀补全不受影响**（`ubuntu`、`ubun` 照常）
+- **不再做「声母韵母颠倒」纠正**：曾用 `derive` 给 74 种组合派生颠倒写法，
+  实测污染分词器（`kaol` → `ka'ol` 蹦出「卡咯」），已全部撤掉
+- **分支模型**：`snapshot` 为工作分支，`master` 只接受 `--ff-only` 合并
+
+### 升级影响
+
+- **需要重新部署**；安装包内含最新 `rime-config/`
+- 已安装用户：覆盖配置文件后「重新部署」即可，不必重装
+- 全新安装：装完仍需重启一次（TSF 注册）
+
+### 验证
+
+| 检查 | 结果 |
+|---|---|
+| `zongguo` / `senme` / `sijian` | 中国 / 什么 / 时间 |
+| `jintain` / `penyou` / `yinyu` | 今天 / 朋友 / 英语 |
+| `kaol` / `kaolv` | 考虑 / 考虑（分词未被破坏） |
+| `github` | GitHub \| github |
+| `vscode` | VSCode \| vscode |
+| `uqnali` | 无候选（不再出 Ubuntu去哪里） |
+| `nihaowoshiyanghanlin` + Shift+Enter | `nihaowoshiyanghanlin`（无分隔符） |
+| 自动化 | Lua 100 项、SSF 237 项、panel-bench 11 项、host-regression 通过 |
+| 白名单 | 83 条，`docs/CUSTOM-WORDS.md` 与 `custom_phrase.txt` 一致 |
+
+### 已知问题
+
+- **Geek Uninstaller 搜索栏仍看不到候选窗**：该宿主不提供 `TfContextView`，
+  位置永远无效（诊断日志确认 `posValid=0`）。按键与上屏正常，仅候选窗不显示
 ## 0.1.4 — 2026-10-23
 
 **PATCH**：词条扩充 + 修 bug（计算器）+ 文档重构，使用方式不变。

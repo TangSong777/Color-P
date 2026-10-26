@@ -6,9 +6,9 @@ Color-P 是一个个人定制的 Windows 中文输入法发行版：以 [Weasel 
 
 | | |
 |---|---|
-| 当前版本 | `0.1.4` |
+| 当前版本 | `0.1.5` |
 | 上游版本 | Weasel `0.17.4` / librime `1.13.1` |
-| 安装包 | `Color-P-Setup-0.1.4.exe`（约 27 MB，离线） |
+| 安装包 | `Color-P-Setup-0.1.5.exe`（约 27 MB，离线） |
 | 许可证 | GPL-3.0（代码）· 皮肤素材版权归原作者 |
 
 ## 目录
@@ -40,7 +40,7 @@ Color-P 是一个个人定制的 Windows 中文输入法发行版：以 [Weasel 
 
 ## 快速开始
 
-1. 从 [Releases](https://github.com/TangSong777/Color-P/releases/latest) 下载 `Color-P-Setup-0.1.4.exe`，右键**以管理员身份运行**
+1. 从 [Releases](https://github.com/TangSong777/Color-P/releases/latest) 下载 `Color-P-Setup-0.1.5.exe`，右键**以管理员身份运行**
 2. 装完**重启一次**（TSF 需要重新注册）
 3. 语言列表选择「小狼毫 / Color-P」，随便打一句：
 
@@ -203,7 +203,7 @@ cC 1 0 0 / 4      →  100/4=25.0
 
 ### 安装包
 
-从 [Releases](https://github.com/TangSong777/Color-P/releases/latest) 下载 `Color-P-Setup-0.1.4.exe`，右键以管理员身份运行。
+从 [Releases](https://github.com/TangSong777/Color-P/releases/latest) 下载 `Color-P-Setup-0.1.5.exe`，右键以管理员身份运行。
 
 安装器依次完成：
 
@@ -219,7 +219,7 @@ cC 1 0 0 / 4      →  100/4=25.0
 静默安装（需在已提权终端中运行）：
 
 ```powershell
-Color-P-Setup-0.1.4.exe /SILENT /NORESTART /SUPPRESSMSGBOXES
+Color-P-Setup-0.1.5.exe /SILENT /NORESTART /SUPPRESSMSGBOXES
 ```
 
 安装包不依赖外部组件：Boost 静态链接，`rime.dll` 与 `WinSparkle.dll` 随包提供，上游安装器内嵌。
@@ -392,7 +392,7 @@ chat → ChatGPT 出现在中文之后，但可以选到
 
 适用于换电脑、重装系统。
 
-1. 新机器安装**同版本**安装包（`Color-P-Setup-0.1.4.exe`），装完重启
+1. 新机器安装**同版本**安装包（`Color-P-Setup-0.1.5.exe`），装完重启
 2. 托盘菜单 →「退出」，确认 `WeaselServer.exe` 已结束（否则文件被占用）
 3. 把下表文件覆盖到新机器的 Rime 用户目录（托盘菜单 →「用户文件夹」）
 4. 确认 `weasel.custom.yaml` 的 `style/ssf_skin` 指向新机器实际皮肤路径
@@ -748,7 +748,8 @@ snapshot ──► master ──► tag + Release
 
 | 版本 | 说明 |
 |---|---|
-| **0.1.4** | 当前稳定版：白名单 80 词、修复计算器、README 重构 |
+| **0.1.5** | 当前稳定版：错音纠正（模糊音）、大小写双份、Shift+Enter 修复 |
+| 0.1.4 | 白名单 80 词、修复计算器、README 重构 |
 | 0.1.3 | 候选去重、白名单 77 词、修复候选框幽灵复现 |
 | 0.1.2 | 候选框内 `-`/`_` 字面量输入、数字选词只认当前页 |
 | 0.1.1 | 文档与发布流程更新（输入功能同 0.1.0） |
