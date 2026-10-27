@@ -14,6 +14,20 @@
 
 ---
 
+## 2026-10-27 — 回退全部模糊音纠错
+
+- **类型**：变更
+- **内容**：0.1.5 引入的 8 条模糊音（平翘舌 zh/z、ch/c、sh/s + 前后鼻音 an/ang、en/eng、in/ing）
+  全部移除 —— 实际使用中干扰大于收益（`zong` 也出「中/种」、`sen` 也出「神/深」）。
+  `rime_ice.custom.yaml` 回到 13 个 patch，不再有 `speller/algebra/+`
+- **文件**：`rime_ice.custom.yaml`、`README.md`（删除「错音纠正」小节，已知限制补一条说明）
+- **验证**：`zongguo` → 总过、`senme` → 森么、`sijian` → 四件、`penyou` → 喷油、
+  `yinyu` → 阴雨（均恢复不纠错）；`zhongguo`/`shenme`/`jintian`/`pengyou`/`yingyu`/
+  `nihao`/`kaol`/`kaolv` 正常；选词、英文补全、大小写双份正常；
+  Lua 100 项、SSF 237 项、panel-bench、host-regression 通过
+- **影响**：需重新部署；0.1.5 的「错音纠正」功能实际下线；未改版本号
+
+---
 ## 发版时怎么用这份账本
 
 1. 从上到下读完所有条目（不要只读最近的）
