@@ -113,3 +113,50 @@ patch:
   translator/preedit_format/+:
     - xform/vvv/-/
     - xform/vvu/_/
+
+  # 颠倒输入识别：打反了声母韵母顺序时，输入框保持原样，候选按正确音节给出。
+  # 只收 i/u/v 开头的两字母组合（ia/ib/.../ub/uc/.../vl/vn）：
+  # 这些变体既不是合法音节、也不是任何合法输入的前缀，所以派生拼写不会污染
+  # 分词器（kaol / zia / zai 全部不受影响）。
+  # a/e/o 开头的 34 种没做 —— 它们本身是独立音节，ab 可切成 a+b，会干扰正常输入。
+  speller/algebra/+:
+    - derive/^ai/ia/
+    - derive/^bi/ib/
+    - derive/^ci/ic/
+    - derive/^di/id/
+    - derive/^ei/ie/
+    - derive/^ji/ij/
+    - derive/^li/il/
+    - derive/^mi/im/
+    - derive/^ni/in/
+    - derive/^pi/ip/
+    - derive/^qi/iq/
+    - derive/^ri/ir/
+    - derive/^si/is/
+    - derive/^ti/it/
+    - derive/^xi/ix/
+    - derive/^yi/iy/
+    - derive/^zi/iz/
+    - derive/^bu/ub/
+    - derive/^cu/uc/
+    - derive/^du/ud/
+    - derive/^fu/uf/
+    - derive/^gu/ug/
+    - derive/^hu/uh/
+    - derive/^ju/uj/
+    - derive/^ku/uk/
+    - derive/^lu/ul/
+    - derive/^mu/um/
+    - derive/^nu/un/
+    - derive/^ou/uo/
+    - derive/^pu/up/
+    - derive/^qu/uq/
+    - derive/^ru/ur/
+    - derive/^su/us/
+    - derive/^tu/ut/
+    - derive/^wu/uw/
+    - derive/^xu/ux/
+    - derive/^yu/uy/
+    - derive/^zu/uz/
+    - derive/^lv/vl/
+    - derive/^nv/vn/

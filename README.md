@@ -274,6 +274,33 @@ Color-P-Setup-0.1.5.exe /SILENT /NORESTART /SUPPRESSMSGBOXES
 
 英文词条**必须小写输入**：大写走方案的「大写字母造词」通道（`zuogeDNAjiance` → 做个DNA检测）。
 
+### 颠倒输入识别
+
+打反了声母韵母的顺序时，**输入框保持原样**，候选按正确音节给出：
+
+```
+uq   →  去 | 取 | 区        （识别为 qu）
+uj   →  巨 | 举 | 居        （识别为 ju）
+vl   →  绿 | 律 | 率        （识别为 lv）
+ib   →  比 | 必 | 毕        （识别为 bi）
+```
+
+覆盖 **40 种**组合，全部是 `i` / `u` / `v` 开头的两字母颠倒：
+
+```
+ia ib ic id ie ij il im in ip iq ir is it ix iy iz
+ub uc ud uf ug uh uj uk ul um un uo up uq ur us ut uw ux uy uz
+vl vn
+```
+
+**为什么只有 40 种**：这些变体既不是合法音节、也不是任何合法输入的前缀，
+所以派生拼写不会污染分词器 —— `kaol`（考虑）、`zia`（子啊）、`zai`（在）全部不受影响。
+
+`a` / `e` / `o` 开头的 34 种没做：它们本身是独立音节（啊 / 饿 / 哦），
+`ab` 会被切成 `a` + `b`，派生后会干扰正常输入。
+
+> 输入框里不会把 `uq` 改成 `qu`，只是候选按 `qu` 给 —— 继续输入也不受影响。
+
 ### 输入示例
 
 ```
