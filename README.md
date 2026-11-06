@@ -92,18 +92,18 @@ woshi        →  选「我是」
 
 | 按键 | 状态 | 行为 |
 |---|---|---|
-| `-` | 组合中、仍在第 1 页 | 输入 `-`，作为字面量参与造句 |
+| `-` | 组合中、仍在第 1 页 | 写进输入串 `-`（1 字符） |
 | `-` | 组合中、已翻页 | 翻回上一页 |
-| `Shift+-` | **组合中** | 输入单个 `_`（ASCII 下划线），作为字面量参与造句 |
+| `Shift+-` | **组合中** | 写进输入串 `_`（1 字符） |
 | `Shift+-` | **未组合** | 按中文标点输出 `——`（与普通标点一致） |
 
 ```
-候选框内：nihao-woshiyanghanlin  →  你好-我是杨寒淋
-候选框内：nihao_woshiyanghanlin  →  你好_我是杨寒淋
-候选框外：Shift+-                →  ——
+候选框内：nihao-  →  输入串 nihao-
+候选框内：nihao_  →  输入串 nihao_
+候选框外：Shift+-  →  ——
 ```
 
-也就是说，`-` 与 `_` 只有在**组成候选**时才作为字面量、不转中文标点；一旦没有候选框，仍遵循中文标点规则。
+`-` 与 `_` 在输入串里是**字面量**，不转中文标点，也不参与组词——Rime 的 speller 只认声母+韵母组成的音节，符号成不了音节，会被当分隔符（候选按 `-` 前后分段）。没有候选框时仍遵循中文标点规则。
 
 ### 混合造句
 
@@ -136,7 +136,7 @@ arduinoqishiyejiunayang              →  Arduino其实也就那样
 |---|---|---|
 | 纯英文单词 | `table_translator@melt_eng` | 已移除。`hello` → 合理了哦，不出英文 |
 | 中英混排词 | `table_translator@cn_en` | 保留。词库 1001 条全部含中文（`X光`、`T恤`、`红Buff`） |
-| 指定名词 | `custom_phrase` + `custom_phrase_complete` | 83 个白名单词，精确命中 + 前缀补全 |
+| 指定名词 | `custom_phrase` + `custom_phrase_complete` | 90 个白名单词，精确命中 + 前缀补全 |
 
 白名单为科技厂商、开发工具、语言与常用软件，按规范大小写写入，**用小写编码输入**。完整清单（编码、分类、是否参与造句）见 **[自定义字词总表](docs/CUSTOM-WORDS.md)**。
 
@@ -259,8 +259,8 @@ Color-P-Setup-0.1.6.exe /SILENT /NORESTART /SUPPRESSMSGBOXES
 | `Shift`（输入框内短按） | 切换中英文（引擎内置行为） |
 | 主键盘 `1`–`5`（当前页可见编号） | 选词；`6`–`9`、`0` 不参与选词 |
 | `=` 有候选时 / `-` 已翻页时 | 下一页 / 上一页 |
-| `-` 仍在第 1 页 | 输入 `-`，参与造句 |
-| `Shift+-`（组合中） | 输入单个 `_`（ASCII），参与造句 |
+| `-` 仍在第 1 页 | 写进输入串 `-`（不参与组词） |
+| `Shift+-`（组合中） | 写进输入串 `_`（不参与组词） |
 | `Shift+-`（未组合） | 输出中文标点 `——` |
 | `Enter` | 提交原始拼写（混合态为字母 + 数字 + 符号） |
 | `Shift+Enter` | 与 `Enter` 相同，上屏原始输入（不含 Rime 自动插入的 `'` 分隔符） |
@@ -305,8 +305,8 @@ vl vn
 
 ```
 nihao                        →  你好
-nihao-woshiyanghanlin        →  你好-我是杨寒淋
-nihao_woshiyanghanlin        →  你好_我是杨寒淋
+nihao-                       →  输入串 nihao-（- 是字面量，不参与组词）
+nihao_                       →  输入串 nihao_（_ 是字面量，不参与组词）
 esp32bistm32haoyong          →  ESP32比STM32好用（数字用小键盘）
 chat                         →  ChatGPT（前缀补全）
 markdownqishiyejiunayang     →  Markdown其实也就那样
@@ -329,9 +329,9 @@ nihaowoshiyanghanlin         →  Enter 或 Shift+Enter 都上屏 nihaowoshiyang
 | `numeric.dict.yaml` | 0–99999 数字词条（脚本生成） |
 | `rime_ice.dict.yaml` | 词库挂载表，含大字表与上述两个词条 |
 | `lua/keypad_input.lua` | 小键盘与数字混合输入处理器 |
-| `lua/dash_filter.lua` | 把占位词条 `DASH`/`USCORE` 还原成候选文本 |
 | `lua/dedupe_filter.lua` | 合并「文本与注释都相同」的重复候选 |
 | `lua/lowercase_candidate_filter.lua` | 英文候选后追加全小写版本 |
+| `lua/short_prefix_filter.lua` | 抑制单字母前缀补全误触 |
 
 ### 白名单与词条
 
@@ -402,13 +402,14 @@ chat → ChatGPT 出现在中文之后，但可以选到
 | 文件 | 作用 | 属于 |
 |---|---|---|
 | `rime_ice.custom.yaml` | **权重与全部行为开关**（处理器/翻译器顺序、按键、时间戳禁用、补全分层、`alphabet`、过滤器） | 本项目独有 |
-| `custom_phrase.txt` | 80 个英文白名单 + 22 个中文短码 | 本项目独有 |
+| `custom_phrase.txt` | 90 个英文白名单 + 22 个中文短码 | 本项目独有 |
 | `mixed_tokens.dict.yaml` | 参与造句的词条（含权重列） | 本项目独有 |
 | `numeric.dict.yaml` | 0–99999 数字词条（1.7 MB） | 本项目独有 |
 | `rime_ice.dict.yaml` | 词库挂载表与顺序（**权重顺序就在这里**） | 本项目改过 |
 | `lua/keypad_input.lua` | 小键盘与数字混合输入 | 本项目独有 |
-| `lua/dash_filter.lua` | `DASH`/`USCORE` 占位符还原 | 本项目独有 |
 | `lua/dedupe_filter.lua` | 候选去重 | 本项目独有 |
+| `lua/lowercase_candidate_filter.lua` | 英文候选后追加全小写版本 | 本项目独有 |
+| `lua/short_prefix_filter.lua` | 抑制单字母前缀补全误触 | 本项目独有 |
 | `weasel.custom.yaml` | SSF 皮肤、配色、布局 | 本项目独有 |
 | `default.custom.yaml` | 方案列表与全局快捷键 | 按需 |
 
@@ -426,7 +427,7 @@ chat → ChatGPT 出现在中文之后，但可以选到
 #### 迁移后校验
 
 ```powershell
-# 1. 词条数量对不对（应为 英文 80 / 中文 22）
+# 1. 词条数量对不对（应为 英文 90 / 中文 22）
 pwsh -File .\src\build-support\gen-word-table.ps1 `
     -CustomPhrase <新目录>\custom_phrase.txt `
     -MixedTokens <新目录>\mixed_tokens.dict.yaml `
@@ -459,8 +460,7 @@ pwsh -File .\src\build-support\gen-word-table.ps1 `
 |---|---|
 | 输入框外无法切换中英文 | 无 TSF 会话；本项目不含键鼠钩子 |
 | 裸 `Shift` 仅在输入框内短按生效 | librime `ascii_composer` 的既有行为，本项目未改动引擎 |
-| `-` 与 `_` 是**候选框内**仅有的两个 ASCII 例外 | 有意设计：组成候选时作为字面量、不转中文标点；没有候选框时 `Shift+-` 仍输出 `——` |
-| 有候选时 `-` / `=` 被完全吞掉，首页末页也不输出字符 | 与 librime 语义一致 |
+| `-` 与 `_` 是**候选框内**仅有的两个 ASCII 例外 | 有意设计：写进输入串时保持字面量、不转中文标点；不参与组词（符号无法成为 Rime 音节）；没有候选框时 `Shift+-` 仍输出 `——` |
 | `Tab` 在拼音组合中用于移动光标 | 有意映射 |
 | 方向键在输入串两端环绕 | librime 1.13.1 限制（`_no_loop` 需 ≥ 1.16） |
 | 中文模式下主键盘 `.` 输出 `。` | 标点形态由中英模式决定；小数点请用小键盘 `KP_Decimal` |
@@ -567,9 +567,9 @@ pwsh -NoProfile -File .\src\build-weasel.ps1 -Both
 需要替换：
 
 - 安装目录下的 `WeaselServer.exe`、`weaselx64.dll`、`weasel.dll`
-- `C:\Windows\System32\weasel.dll` 与 `C:\Windows\SysWOW64\weasel.dll`（需管理员权限；被宿主映射，**必须重启才能替换**）
+- `C:\Windows\System32\weasel.dll` 与 `C:\Windows\SysWOW64\weasel.dll`（需管理员权限；被宿主映射，用 `src/deploy-tsf.ps1` 可免重启替换，已运行的程序需各自重启）
 
-`WeaselServer.exe` 运行时被占用，替换前需停止进程。仓库提供部署脚本 `src/DEPLOY-SOURCE-ASSETS.ps1`（自动提权），以及免重启替换 TSF DLL 的 `src/deploy-tsf.ps1` / `deploy-tsf.cmd`。
+`WeaselServer.exe` 运行时被占用，替换前需停止进程。仓库提供免重启替换 TSF DLL 的 `src/deploy-tsf.ps1` / `deploy-tsf.cmd`（自动提权、改名替换、哈希校验），以及回滚脚本 `src/rollback-tsf.ps1`。
 
 ### 打包安装器
 
@@ -632,11 +632,13 @@ D:\Rime\                     # 仓库根 = 小狼毫安装目录
 │   ├── WeaselUI/            #   候选窗渲染
 │   │   └── ssf/             #   搜狗 SSF 皮肤兼容层
 │   ├── WeaselServer/        #   服务进程与托盘
+│   ├── WeaselDeployer/      #   部署程序（重新部署 / 配置）
+│   ├── WeaselSetup/         #   安装程序
 │   ├── RimeWithWeasel/      #   引擎与 UI 的粘合
-│   ├── rime/lua/            #   keypad_input.lua
 │   ├── include/             #   公共头
 │   ├── build-libs/          #   librime 导入库
 │   ├── build-support/       #   构建/测试辅助脚本
+│   ├── installer/           #   安装包构建（Inno Setup + payload）
 │   └── test/TestSsfSkin/    #   回归测试
 ├── assets/Color-P/          # 皮肤原始资源（skin.ini + 27 个图片）
 ├── rime-config/             # 运行时配置与词条

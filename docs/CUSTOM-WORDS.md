@@ -2,20 +2,20 @@
 
 > 本文件由 `src/build-support/gen-word-table.ps1` 从实际词条文件生成，**请勿手工编辑**。
 >
-> 生成时间：2026-10-26 23:25
+> 生成时间：2026-11-06 15:23
 
 ## 概览
 
 | 类别 | 数量 | 输入方式 | 参与造句 |
 |---|---:|---|---|
-| 英文白名单 | 83 | 全小写编码 | ✅（同时也是词典词条） |
+| 英文白名单 | 90 | 全小写编码 | ✅（同时也是词典词条） |
 | 中文短码 | 22 | 单/双字母 | — |
 | 数字词条 | 100000（0–99999） | **小键盘**数字 | ✅ |
-| **合计自维护词条** | 105 | — | — |
+| **合计自维护词条** | 112 | — | — |
 
 > 数字词条由脚本批量生成，不逐条列出；范围可改（见文末）。
 
-## 英文白名单（83 条）
+## 英文白名单（90 条）
 
 按分类排列。编码一律小写；**输入时必须小写**（大写走方案的「大写字母造词」通道）。
 
@@ -36,74 +36,81 @@
 | 13 | prompt | `prompt` | AI/模型 | ✅ |
 | 14 | Qwen | `qwen` | AI/模型 | ✅ |
 | 15 | AMD | `amd` | 厂商/平台 | — |
-| 16 | Debian | `debian` | 厂商/平台 | ✅ |
-| 17 | Docker | `docker` | 厂商/平台 | ✅ |
-| 18 | GitHub | `github` | 厂商/平台 | ✅ |
-| 19 | GitLab | `gitlab` | 厂商/平台 | ✅ |
-| 20 | Google | `google` | 厂商/平台 | ✅ |
-| 21 | Intel | `intel` | 厂商/平台 | — |
-| 22 | Linux | `linux` | 厂商/平台 | ✅ |
-| 23 | MicroSoft | `microsoft` | 厂商/平台 | ✅ |
-| 24 | NVIDIA | `nvidia` | 厂商/平台 | ✅ |
-| 25 | PowerShell | `powershell` | 厂商/平台 | ✅ |
-| 26 | Ubuntu | `ubuntu` | 厂商/平台 | — |
-| 27 | Vim | `vim` | 厂商/平台 | — |
-| 28 | VMware | `vmware` | 厂商/平台 | — |
-| 29 | VPN | `vpn` | 厂商/平台 | — |
-| 30 | VSCode | `vscode` | 厂商/平台 | — |
-| 31 | Windows | `windows` | 厂商/平台 | ✅ |
-| 32 | WinScp | `winscp` | 厂商/平台 | ✅ |
-| 33 | Chinese | `chinese` | 语言/格式 | ✅ |
-| 34 | CPU | `cpu` | 语言/格式 | ✅ |
-| 35 | English | `english` | 语言/格式 | — |
-| 36 | GPU | `gpu` | 语言/格式 | ✅ |
-| 37 | HDMI | `hdmi` | 语言/格式 | ✅ |
-| 38 | Java | `java` | 语言/格式 | ✅ |
-| 39 | JavaScript | `javascript` | 语言/格式 | ✅ |
-| 40 | Markdown | `markdown` | 语言/格式 | ✅ |
-| 41 | NVMe | `nvme` | 语言/格式 | ✅ |
-| 42 | Python | `python` | 语言/格式 | ✅ |
-| 43 | RAM | `ram` | 语言/格式 | ✅ |
-| 44 | Rust | `rust` | 语言/格式 | ✅ |
-| 45 | SATA | `sata` | 语言/格式 | ✅ |
-| 46 | SSD | `ssd` | 语言/格式 | ✅ |
-| 47 | Arduino | `arduino` | 软件/游戏 | — |
-| 48 | AutoCAD | `autocad` | 软件/游戏 | — |
-| 49 | Blender | `blender` | 软件/游戏 | ✅ |
-| 50 | CDDA | `cdda` | 软件/游戏 | ✅ |
-| 51 | Chrome | `chrome` | 软件/游戏 | ✅ |
-| 52 | Clash | `clash` | 软件/游戏 | ✅ |
-| 53 | Excel | `excel` | 软件/游戏 | — |
-| 54 | Flash | `flash` | 软件/游戏 | ✅ |
-| 55 | Geek | `geek` | 软件/游戏 | ✅ |
-| 56 | Keil | `keil` | 软件/游戏 | ✅ |
-| 57 | MATLAB | `matlab` | 软件/游戏 | ✅ |
-| 58 | Minecraft | `minecraft` | 软件/游戏 | ✅ |
-| 59 | Multisim | `multisim` | 软件/游戏 | ✅ |
-| 60 | Notion | `notion` | 软件/游戏 | ✅ |
-| 61 | OBS | `obs` | 软件/游戏 | — |
-| 62 | Obsidian | `obsidian` | 软件/游戏 | — |
-| 63 | PlatformIO | `platformio` | 软件/游戏 | ✅ |
-| 64 | PowerPoint | `powerpoint` | 软件/游戏 | ✅ |
-| 65 | PyCharm | `pycharm` | 软件/游戏 | ✅ |
-| 66 | SolidWorks | `solidworks` | 软件/游戏 | ✅ |
-| 67 | STM32CubeIDE | `stmcubeide` | 软件/游戏 | ✅ |
-| 68 | STM32CubeMX | `stmcubemx` | 软件/游戏 | ✅ |
-| 69 | Undertale | `undertale` | 软件/游戏 | — |
-| 70 | VisualStudio | `visualstudio` | 软件/游戏 | — |
-| 71 | Word | `word` | 软件/游戏 | ✅ |
-| 72 | XMind | `xmind` | 软件/游戏 | ✅ |
-| 73 | Desktop | `desktop` | 工具/其他 | ✅ |
-| 74 | ffmpeg | `ffmpeg` | 工具/其他 | ✅ |
-| 75 | Listary | `listary` | 工具/其他 | ✅ |
-| 76 | Moonlight | `moonlight` | 工具/其他 | ✅ |
-| 77 | Patina | `patina` | 工具/其他 | ✅ |
-| 78 | PixPin | `pixpin` | 工具/其他 | ✅ |
-| 79 | README | `readme` | 工具/其他 | ✅ |
-| 80 | Sunshine | `sunshine` | 工具/其他 | ✅ |
-| 81 | Wallpaper | `wallpaper` | 工具/其他 | ✅ |
-| 82 | WorkSpace | `workspace` | 工具/其他 | ✅ |
-| 83 | ZeroTier | `zerotier` | 工具/其他 | ✅ |
+| 16 | Cloudflare | `cloudflare` | 厂商/平台 | ✅ |
+| 17 | Debian | `debian` | 厂商/平台 | ✅ |
+| 18 | Docker | `docker` | 厂商/平台 | ✅ |
+| 19 | GitHub | `github` | 厂商/平台 | ✅ |
+| 20 | GitLab | `gitlab` | 厂商/平台 | ✅ |
+| 21 | Google | `google` | 厂商/平台 | ✅ |
+| 22 | Intel | `intel` | 厂商/平台 | — |
+| 23 | Linux | `linux` | 厂商/平台 | ✅ |
+| 24 | MicroSoft | `microsoft` | 厂商/平台 | ✅ |
+| 25 | NVIDIA | `nvidia` | 厂商/平台 | ✅ |
+| 26 | PowerShell | `powershell` | 厂商/平台 | ✅ |
+| 27 | Ubuntu | `ubuntu` | 厂商/平台 | — |
+| 28 | Vim | `vim` | 厂商/平台 | — |
+| 29 | VMware | `vmware` | 厂商/平台 | — |
+| 30 | VPN | `vpn` | 厂商/平台 | — |
+| 31 | VSCode | `vscode` | 厂商/平台 | — |
+| 32 | Windows | `windows` | 厂商/平台 | ✅ |
+| 33 | WinScp | `winscp` | 厂商/平台 | ✅ |
+| 34 | Chinese | `chinese` | 语言/格式 | ✅ |
+| 35 | CPU | `cpu` | 语言/格式 | ✅ |
+| 36 | English | `english` | 语言/格式 | — |
+| 37 | GPU | `gpu` | 语言/格式 | ✅ |
+| 38 | HDMI | `hdmi` | 语言/格式 | ✅ |
+| 39 | Java | `java` | 语言/格式 | ✅ |
+| 40 | JavaScript | `javascript` | 语言/格式 | ✅ |
+| 41 | Markdown | `markdown` | 语言/格式 | ✅ |
+| 42 | NVMe | `nvme` | 语言/格式 | ✅ |
+| 43 | Python | `python` | 语言/格式 | ✅ |
+| 44 | RAM | `ram` | 语言/格式 | ✅ |
+| 45 | Rust | `rust` | 语言/格式 | ✅ |
+| 46 | SATA | `sata` | 语言/格式 | ✅ |
+| 47 | SSD | `ssd` | 语言/格式 | ✅ |
+| 48 | Arduino | `arduino` | 软件/游戏 | — |
+| 49 | AutoCAD | `autocad` | 软件/游戏 | — |
+| 50 | Blender | `blender` | 软件/游戏 | ✅ |
+| 51 | CDDA | `cdda` | 软件/游戏 | ✅ |
+| 52 | Chrome | `chrome` | 软件/游戏 | ✅ |
+| 53 | Clash | `clash` | 软件/游戏 | ✅ |
+| 54 | Excel | `excel` | 软件/游戏 | — |
+| 55 | Flash | `flash` | 软件/游戏 | ✅ |
+| 56 | Geek | `geek` | 软件/游戏 | ✅ |
+| 57 | Keil | `keil` | 软件/游戏 | ✅ |
+| 58 | MATLAB | `matlab` | 软件/游戏 | ✅ |
+| 59 | Minecraft | `minecraft` | 软件/游戏 | ✅ |
+| 60 | Multisim | `multisim` | 软件/游戏 | ✅ |
+| 61 | Notion | `notion` | 软件/游戏 | ✅ |
+| 62 | OBS | `obs` | 软件/游戏 | — |
+| 63 | Obsidian | `obsidian` | 软件/游戏 | — |
+| 64 | PlatformIO | `platformio` | 软件/游戏 | ✅ |
+| 65 | PowerPoint | `powerpoint` | 软件/游戏 | ✅ |
+| 66 | PyCharm | `pycharm` | 软件/游戏 | ✅ |
+| 67 | SolidWorks | `solidworks` | 软件/游戏 | ✅ |
+| 68 | Steam | `steam` | 软件/游戏 | ✅ |
+| 69 | STM32CubeIDE | `stmcubeide` | 软件/游戏 | ✅ |
+| 70 | STM32CubeMX | `stmcubemx` | 软件/游戏 | ✅ |
+| 71 | Undertale | `undertale` | 软件/游戏 | — |
+| 72 | VisualStudio | `visualstudio` | 软件/游戏 | — |
+| 73 | Word | `word` | 软件/游戏 | ✅ |
+| 74 | XMind | `xmind` | 软件/游戏 | ✅ |
+| 75 | blogs | `blogs` | 工具/其他 | ✅ |
+| 76 | Desktop | `desktop` | 工具/其他 | ✅ |
+| 77 | ffmpeg | `ffmpeg` | 工具/其他 | ✅ |
+| 78 | Listary | `listary` | 工具/其他 | ✅ |
+| 79 | manager | `manager` | 工具/其他 | ✅ |
+| 80 | Moonlight | `moonlight` | 工具/其他 | ✅ |
+| 81 | Patina | `patina` | 工具/其他 | ✅ |
+| 82 | PixPin | `pixpin` | 工具/其他 | ✅ |
+| 83 | README | `readme` | 工具/其他 | ✅ |
+| 84 | server | `server` | 工具/其他 | ✅ |
+| 85 | session | `session` | 工具/其他 | ✅ |
+| 86 | stream | `stream` | 工具/其他 | ✅ |
+| 87 | Sunshine | `sunshine` | 工具/其他 | ✅ |
+| 88 | Wallpaper | `wallpaper` | 工具/其他 | ✅ |
+| 89 | WorkSpace | `workspace` | 工具/其他 | ✅ |
+| 90 | ZeroTier | `zerotier` | 工具/其他 | ✅ |
 
 ## 其它参与造句的词条（3 条）
 

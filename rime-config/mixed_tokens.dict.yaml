@@ -12,8 +12,6 @@ sort: by_weight
 
 ESP32	esp32	100000
 STM32	stm32	100000
-DASH	vvv	1000
-USCORE	vvu	1000
 杨寒淋	yanghanlin	100000
 ChatGPT	chatgpt	1000
 Gemini	gemini	1000
@@ -80,3 +78,10 @@ WorkSpace	workspace	1000
 Sunshine	sunshine	1000
 Moonlight	moonlight	1000
 ffmpeg	ffmpeg	1000
+manager	manager	1000
+session	session	1000
+server	server	1000
+blogs	blogs	1000
+Cloudflare	cloudflare	1000
+Steam	steam	1000
+stream	stream	1000

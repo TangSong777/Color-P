@@ -135,3 +135,10 @@ WorkSpace	workspace
 Sunshine	sunshine
 Moonlight	moonlight
 ffmpeg	ffmpeg
+manager	manager
+session	session
+server	server
+blogs	blogs
+Cloudflare	cloudflare
+Steam	steam
+stream	stream

@@ -31,13 +31,14 @@ $categories = [ordered]@{
                  'Copilot','Qwen','Kimi','Grok','prompt','Codex')
   '厂商/平台' = @('MicroSoft','Google','Windows','Ubuntu','Linux','Debian','Docker','Vim',
                  'VMware','VPN','NVIDIA','Intel','AMD','GitHub','GitLab','VSCode',
-                 'PowerShell','WinScp')
+                 'PowerShell','WinScp','Cloudflare')
   '语言/格式' = @('Python','Java','Rust','JavaScript','Markdown','English','Chinese','HDMI','SSD','SATA','CPU','GPU','RAM','NVMe')
   '软件/游戏' = @('Minecraft','Undertale','CDDA','Clash','MATLAB','PyCharm','VisualStudio',
                  'Multisim','SolidWorks','AutoCAD','STM32CubeMX','STM32CubeIDE','Keil',
                  'Arduino','PlatformIO','Blender','Chrome','Geek','Flash','OBS',
-                 'PowerPoint','Excel','Word','XMind','Obsidian','Notion')
-  '工具/其他' = @('Listary','PixPin','ZeroTier','Wallpaper','Desktop','Patina','README','WorkSpace','Sunshine','Moonlight','ffmpeg')
+                 'PowerPoint','Excel','Word','XMind','Obsidian','Notion','Steam')
+  '工具/其他' = @('Listary','PixPin','ZeroTier','Wallpaper','Desktop','Patina','README','WorkSpace','Sunshine','Moonlight','ffmpeg',
+                 'manager','session','server','blogs','stream')
 }
 
 function Get-Category([string]$word) {
@@ -122,10 +123,8 @@ foreach ($e in $ordered) {
 Add-Line ''
 
 # ---- 型号词条（有编码但不在 custom_phrase 里的）----
-$extraTokens = $tokens | Where-Object { -not ($english | Where-Object { $_.Code -eq $_.Code -and $_.Word -eq $_.Word }) }
 $extraTokens = @($tokens | Where-Object {
   $tok = $_
-  $tok.Code -notin @('vvv','vvu') -and
   -not ($english | Where-Object { $_.Word -eq $tok.Word -and $_.Code -eq $tok.Code })
 })
 if ($extraTokens.Count) {

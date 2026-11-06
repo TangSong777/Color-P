@@ -98,21 +98,16 @@ patch:
   #
   # 数字进入 alphabet 后，主键盘数字本会被 speller 吃掉，所以 keypad_input.lua 里
   # 加了拦截：主键盘数字只用于选词，永不进入输入串；只有小键盘数字才作为拼写输入。
-  speller/alphabet: "zyxwvutsrqponmlkjihgfedcbaZYXWVUTSRQPONMLKJIHGFEDCBA`0123456789+-*/."
+  speller/alphabet: "zyxwvutsrqponmlkjihgfedcbaZYXWVUTSRQPONMLKJIHGFEDCBA`0123456789+-*/._"
 
-  # 把占位符 DASH 显示成连字符（配合 keypad_input 的 '-' 输入）
+
   engine/filters/+:
-    - lua_filter@*dash_filter
     - lua_filter@*dedupe_filter
     # 抑制单字母前缀补全（u -> Ubuntu、i -> Intel），避免误触后整句被英文吃掉。
     - lua_filter@*short_prefix_filter
     # 英文候选的大小写双份：GitHub 之后紧跟 github。必须排在去重之后。
     - lua_filter@*lowercase_candidate_filter
 
-  # 预编辑里把占位符 vvv 显示成连字符（与 dash_filter 对应）
-  translator/preedit_format/+:
-    - xform/vvv/-/
-    - xform/vvu/_/
 
   # 颠倒输入识别：打反了声母韵母顺序时，输入框保持原样，候选按正确音节给出。
   # 只收 i/u/v 开头的两字母组合（ia/ib/.../ub/uc/.../vl/vn）：

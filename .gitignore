@@ -56,3 +56,4 @@ reference/**/.github/
 !src/lib64/WinSparkle.def
 
 
+*.bak-*

@@ -1,4 +1,4 @@
-# 生成 mixed_tokens.dict.yaml：把「英文白名单」变成可参与造句的词典词条。
+﻿# 生成 mixed_tokens.dict.yaml：把「英文白名单」变成可参与造句的词典词条。
 #
 # 为什么需要：custom_phrase 里的条目只作为独立候选，**不参与 Rime 的造句**。
 # 想让 arduinoqishiyejiunayang 出「Arduino其实也就那样」，Arduino 必须是一条
@@ -42,13 +42,10 @@ foreach ($line in @(
 
 # 额外词条：不属于白名单，但必须在重新生成时保留
 #   ESP32/STM32  : 含数字型号，靠 speller/alphabet 的 0-9 输入
-#   DASH/USCORE  : 内部占位符，对应 - 与 _（由 dash_filter 显示回真实字符）
 #   杨寒淋       : 专名，权重给高，保证造句时压过同音词
 $extra = @(
   @('ESP32', 'esp32', '100000'),
   @('STM32', 'stm32', '100000'),
-  @('DASH', 'vvv', '1000'),
-  @('USCORE', 'vvu', '1000'),
   @('杨寒淋', 'yanghanlin', '100000')
 )
 foreach ($e in $extra) { [void]$sb.AppendLine("$($e[0])`t$($e[1])`t$($e[2])") }

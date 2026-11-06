@@ -1,3 +1,8 @@
+> **Historical record**: this is an archive of the 2026-09 build process.
+> `build-boost-libs.ps1` (mentioned below) is no longer in the repository, and
+> the current build steps are in the repository root `README.md` under
+> "构建与测试" (Build and test).
+
 # Building Weasel from this tree
 
 This records how to reproduce the binaries in `dist\` on this machine. Weasel's

@@ -444,16 +444,17 @@ function keypad_input.func(key, env)
     return 2
   end
   -- Shift+- （下划线）：
-  --   组合中 -> 插入占位符 vvu，作为字面量参与造句，显示为单个 "_"
+  --   组合中 -> 写进输入串 "_"（1 字符），不直接上屏，不参与组词。
   --   未组合 -> 不拦截，交还标点层按中文标点输出 "——"（与普通标点一致）
   if (bare == "underscore" or key_repr == "underscore" or key_repr == "_" or
       key_repr == "Shift+minus") and
       (context:has_menu() or context:is_composing()) then
+    -- 写进输入串显示 "_"，不直接上屏。
     local input = context.input or ""
     local raw = input .. env.tail
     local position = env.tail_cursor > 0 and (#input + env.tail_cursor)
         or math.max(0, math.min(context.caret_pos or #input, #input))
-    env.edit_raw(insert_at(raw, position, "vvu"), position + 3)
+    env.edit_raw(insert_at(raw, position, "_"), position + 1)
     return 1
   end
 
@@ -474,10 +475,8 @@ function keypad_input.func(key, env)
   end
   -- 主键盘 -/= 的分工：
   --   =  : 始终翻下一页（有候选时）
-  --   -  : 已翻页（不在第 1 页）时翻回上一页；仍在第 1 页时作为字面量插入
-  -- 字面量用占位符 vvv（词条 DASH -> vvv），由 dash_filter 显示成 "-"。
-  -- 之所以不直接插入 "-"：Rime 的词条文件是 YAML，"-" 开头的行会被当成列表项，
-  -- 无法登记「编码为 -」的词条，因而 "-" 不会参与造句。
+  --   -  : 已翻页（不在第 1 页）时翻回上一页；仍在第 1 页时写进输入串 "-"
+  -- 1 字符，退格一次即可删除；不参与组词（符号无法成为 Rime 音节）。
   if context:has_menu() and key_repr == "equal" then
     return 2
   end
@@ -490,11 +489,12 @@ function keypad_input.func(key, env)
       local page_start = math.floor(segment.selected_index / page_size) * page_size
       if page_start > 0 then return 2 end        -- 已翻页 -> 上一页
     end
+    -- 写进输入串显示 "-"，不直接上屏。
     local input = context.input or ""
     local raw = input .. env.tail
     local position = env.tail_cursor > 0 and (#input + env.tail_cursor)
         or math.max(0, math.min(context.caret_pos or #input, #input))
-    env.edit_raw(insert_at(raw, position, "vvv"), position + 3)
+    env.edit_raw(insert_at(raw, position, "-"), position + 1)
     return 1
   end
   if mixed and key_repr == "Escape" then

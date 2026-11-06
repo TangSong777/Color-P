@@ -8,7 +8,7 @@
 **版本号只在项目所有者明确指令后更新。** 日常改动（加词、修 bug、改文档、调参数）
 **只改本地文件并部署验证，不提交、不推送、不升版本、不打标签、不重建发布包**。
 
-始终保持**一个稳定版本**（当前 `0.1.0`）；改动先累积，等指令再一并定稿发布。
+始终保持**一个稳定版本**（当前 `0.1.7`）；改动先累积，等指令再一并定稿发布。
 
 收到「更新版本」的指令后，按这个顺序做：
 
@@ -58,6 +58,42 @@
 
 一次发布里混合了多种变更时，取**最高位**。例如「新特性 + 修 bug」→ 升 `MINOR`，
 `PATCH` 归零。
+
+## 0.1.7 — 2026-11-06
+
+**类型**：PATCH（连字符行为定稿 + 候选去重 + 词库扩充 + 全库文档清理，无破坏性变更）
+
+### 新增
+- 候选去重（`dedupe_filter`）：同一候选的「文字 + 注释」只保留一次，`Markdown` / `Arduino` / `prompt` 等不再出现两份
+
+### 修复
+- `-` / `_` 行为定稿：候选框内按 `-` 写进输入串（1 字符、退格一次可删），不直接上屏；已翻页时仍返回上一页。Shift+- 同理写入 `_`。此前尝试让它们像数字一样参与组词，受 librime speller 限制（只认声母 + 韵母组成的音节）无法实现，已回退
+- 英文白名单补 `manager` / `session` / `server` / `blogs` / `Cloudflare` / `Steam` / `stream` 七词（白名单 90 条）
+- 移除 `en_dicts/cn_en.txt` 的 `Server酱` 两行，`server` 不再被前缀补全带出中文词
+
+### 变更
+- `speller/alphabet` 末尾加回 `_`，输入串 `keai_niubi` 的 `niubi` 不再被 speller 丢弃
+- 删除 `lua/dash_filter.lua` 与 `DASH` / `USCORE` 占位符词条
+
+### 文档 / 清理
+- README：`-` / `_` 四处说明、输入示例、已知限制、项目结构、部署章节同步
+- `docs/comparison-with-weasel-and-sogou.md`：`-` / `=` 边界行为、当前状态两处修正
+- `docs/build-weasel.md`：加历史标注
+- `docs/CUSTOM-WORDS.md`：重新生成（英文 90 / 中文 22 / 型号 3 / 数字 100000）
+- 删除 `src/rime/`（旧配置副本）、`src/deploy/`（死脚本）、`src/dist/` 下 4 个探测目录与临时文件
+- 上游 `lowercase_candidate_filter.lua`、`short_prefix_filter.lua` 换行符转回 LF
+
+### 升级影响
+- 配置与词库有变更，**需要重新部署**（`WeaselDeployer.exe /deploy`）并重启 `WeaselServer.exe`
+- 不涉及 TSF DLL 变更，无需重启系统
+- `-` / `_` 不再产生「可爱-牛逼」这类整体候选，改为按前后分段
+
+### 验证
+- `test_keypad.py` 100 项通过
+- `ssf_tests.exe` 237 checks 0 failures PASSED
+- `host-regression.exe` PASS
+- `panel-bench.exe` PASS
+- `docs/CUSTOM-WORDS.md` 与 `custom_phrase.txt` / `mixed_tokens.dict.yaml` / `numeric.dict.yaml` 一致
 
 ## 0.1.6 — 2026-10-27
 
